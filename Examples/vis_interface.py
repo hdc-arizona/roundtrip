@@ -16,6 +16,7 @@ class Interface(Magics):
         display(Javascript("require.config({ \
                                             baseUrl: './', \
                                             paths: { "+requireInfo+"} });"))
+        print(requireInfo)
         super(Interface, self).__init__(shell)
         # Clean up namespace function
         display(HTML("<script>function cleanUp() { argList =[]; element = null; cell_idx = -1}</script>"))

@@ -1,1 +1,0 @@
-var valueToReadIn = 12;
