@@ -25,12 +25,12 @@ loading visualizations, fetching data, and other aspects of the interface.
 There are two main functions to be used in this interface, loadVisualization and fetchData.
 
 ##### loadVisualization nameID, input1, input2, input3, ...
-<br/>After nameID the other arguments can be javascript, html, css, json, csv, or python values/constants (use % to pass the value of a python variable, i.e. %sum) ect. Javascript filesShould be modified according to the section below ("Modification to javascript files"). html files can have a style section, but otherwise should be treated as if one was entering DOM elements directly into a pair of <body></body> tags. Everything past the name/javascript file is optional. 
+After nameID the other arguments can be javascript, html, css, json, csv, or python values/constants (use % to pass the value of a python variable, i.e. %sum) ect. Javascript filesShould be modified according to the section below ("Modification to javascript files"). html files can have a style section, but otherwise should be treated as if one was entering DOM elements directly into a pair of <body></body> tags. Everything past the name/javascript file is optional. 
 
 Accessing arguments comes from the javascript list argList. See walkThroughArgList.js as an example
 
 ##### fetchData (nameID, pythonVariableToFetchInto, javascriptVariableToFetchFrom)
-<br/>Fetchs the javascript variable "javascriptVariableToFetchFrom" into the python variable "pythonVariableToFetchInto".
+Fetchs the javascript variable "javascriptVariableToFetchFrom" into the python variable "pythonVariableToFetchInto".
 
 Types: Currently values passed in/fetched out are passed as strings (i.e. %sum will pass str(sum) as an argument to the javascript file)
 
