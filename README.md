@@ -38,9 +38,9 @@ Types: Currently values passed in/fetched out are passed as strings (i.e. %sum w
 If you want to load a javascript file then the following should be placed around your code:
 
 (function(element) {
-<br/> require(\['d3'\], function(d3) {
-<br/>  Your code here
-<br/> })
-})(element);
+<br/>&nbsp;&nbsp;require(\['d3'\], function(d3) {
+<br/>&nbsp;&nbsp;&nbsp;&nbsp;Your code here
+<br/>&nbsp;})
+<br/>})(element);
 
 Note the use of require here. The argument should be a list of all the keys specified in require.config (i.e. in the example above I have d3 listed as my requirement)
