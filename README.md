@@ -54,7 +54,7 @@ If you want to load a javascript file then the following should be placed around
 
 ```
 (function(element) {
-  require(\['d3'\], function(d3) {
+  require(['d3'], function(d3) {
     //Your code here
   })
 })(element);
@@ -88,7 +88,7 @@ the `argList` inside `walkThroughArgList.js`:
 walkThroughArgList.js:
 
 (function(element) {
-  require(\['d3'\], function(d3) {
+  require(['d3'], function(d3) {
     for (var i = 0; i < argList.length; i++) {
       // Do something with argList[i]
     }
@@ -143,7 +143,7 @@ var toBeFetched = {
 };
 
 (function(element) {
-  require(\['d3'\], function(d3) {
+  require(['d3'], function(d3) {
     // ... code here ...
 
     toBeFetched.x = // some value
