@@ -133,6 +133,28 @@ is populated. It cannot be used again within the same cell.
 
 Both values will be passed as strings.
 
+The Javascript variable must be globally accessible from the Javascript files
+associated with `nameID`:
+
+```
+var toBeFetched = {
+  x: "",
+  y: ""
+};
+
+(function(element) {
+  require(\['d3'\], function(d3) {
+    // ... code here ...
+
+    toBeFetched.x = // some value
+    toBeFetched.y = // some value
+
+    // ... more code here ...
+
+  })
+})(element);
+```
+
 
 
 ### Examples
