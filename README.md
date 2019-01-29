@@ -8,8 +8,8 @@ cells in a Jupyter Notebook) and the Javascript one wants to load.
  
 To use with your own notebook:
 
-1) Copy `vis\_interface.py` and require.config into the same directory as your notebook.
-2) Add a new cell and run the magic command `%load\_ext vis\_interface`
+1) Copy `vis_interface.py` and require.config into the same directory as your notebook.
+2) Add a new cell and run the magic command `%load_ext vis_interface`
 3) Use the magic commands `%loadVisualization` and `%fetchData` to use this interface (for loading javascript files and fetching data from javascript into python)
 
 
