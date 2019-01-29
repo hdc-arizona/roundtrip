@@ -4,10 +4,10 @@ An interface for loading javascript (notably D3 visualizations) into Jupyter
 Notebooks. Allows for one to transfer data between the Python (i.e. from the
 cells in a Jupyter Notebook) and the Javascript one wants to load. 
 
-[Adding Roundtrip to Your Notebook](#Using-Roundtrip-in-your-Notebook)
-[Loading Visualizations](#Loading-Visualizations)
-[Fetching Data from Visualizations](#Fetching-Data)
-[Example Notebook](#Examples)
+- [Adding Roundtrip to Your Notebook](#Using-Roundtrip-in-your-Notebook)
+- [Loading Visualizations](#Loading-Visualizations)
+- [Fetching Data from Visualizations](#Fetching-Data)
+- [Example Notebook](#Examples)
 
 
 
@@ -39,7 +39,7 @@ Input may be of type:
 - CSS
 - JSON
 - CSV
-- [Python values/constants](#Python values)
+- [Python values/constants](#Python-values)
 
 The focus of Roundtrip is Javascript, but the other files may be useful for
 structuring your visualization and adding data. None but the single Javascript
