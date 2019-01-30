@@ -4,10 +4,9 @@ An interface for loading javascript (notably D3 visualizations) into Jupyter
 Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.
 
 - [Getting Started](#Getting-Started)
-- [Adding Roundtrip to Your Notebook](#Using-Roundtrip-in-your-Notebook)
+- [Using Roundtrip in Your Notebook](#Using-Roundtrip-in-your-Notebook)
 - [Loading Visualizations](#Loading-Visualizations)
 - [Fetching Data from Visualizations](#Fetching-Data)
-- [Example Notebook](#Examples)
 
 
 
