@@ -1,13 +1,34 @@
 ## Roundtrip
 
 An interface for loading javascript (notably D3 visualizations) into Jupyter
-Notebooks. Allows for one to transfer data between the Python (i.e. from the
-cells in a Jupyter Notebook) and the Javascript one wants to load. 
+Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.
 
-- [Using Roundtrip to Your Notebook](#Using-Roundtrip-in-your-Notebook)
+- [Getting Started](#Getting-Started)
+- [Using Roundtrip in Your Notebook](#Using-Roundtrip-in-your-Notebook)
 - [Loading Visualizations](#Loading-Visualizations)
 - [Fetching Data from Visualizations](#Fetching-Data)
-- [Example Notebook](#Examples)
+
+
+
+### Getting Started
+1) Install [Jupyter notebook](https://jupyter.org/install)
+2) Clone this repository:
+```bash
+get clone https://github.com/hdc-arizona/roundtrip.git
+```
+3) Start the example jupyter notebook:
+```bash
+jupyter-notebook roundtrip/Examples/ExampleNotebook.ipynb
+```
+
+On load, you may need to clean the output by running `Restart & Clear Output`
+from the `Kernel` menu in Jupyter.
+
+Running the cells in the example will demonstrate:
+
+1. Loading Roundtrip
+2. Loading a sample visualization
+3. Fetching data out of visualizations
 
 
 
@@ -15,12 +36,13 @@ cells in a Jupyter Notebook) and the Javascript one wants to load.
  
 To use with your own notebook:
 
-1) Copy `vis_interface.py` and require.config into the same directory as your notebook.
+1) Copy `vis_interface.py` and `require.config` into the same directory as your notebook.
 2) Add a new cell and run the magic command `%load_ext vis_interface`
 3) Use the magic commands `%loadVisualization` and `%fetchData` to use this interface (for loading javascript files and fetching data from javascript into python)
 
-
 The `%loadVisualization` and `%fetchData` commands are described below.
+
+
 
 ### Loading Visualizations
 
@@ -101,7 +123,6 @@ See
 walkThroughArgList.js in the [Examples](#Examples) notebook for a
 demonstration.
 
-
 #### HTML
 
 HTML files may have a style section but otherwise should be treated as
@@ -154,22 +175,3 @@ var toBeFetched = {
   })
 })(element);
 ```
-
-
-
-### Examples
-
-Try running the notebook "ExampleNotebook.ipynb" in the "Examples" directory:
-
-```
-jupyter-notebook Examples/ExampleNotebook.ipynb
-```
-
-On load, you may need to clean the output by running `Restart & Clear Output`
-from the `Kernel` menu in Jupyter.
-
-Running the cells will demonstrate:
-
-1. Loading Roundtrip
-2. Loading a sample visualization
-3. Fetching data out of visualizations
