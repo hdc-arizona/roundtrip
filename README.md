@@ -51,7 +51,7 @@ The command for loading visualizations (or any HTML or Javascript file) is
 loaded set and the files and arguments themselves (`inputX`).
 
 ```
-%loadVisualization nameID input1 input2 input3 ...
+%loadVisualization nameID inputJSfile input1 input2 ...
 ```
 
 Input may be of type:
@@ -65,7 +65,8 @@ Input may be of type:
 
 The focus of Roundtrip is Javascript, but the other files may be useful for
 structuring your visualization and adding data. None but the single Javascript
-file is required.
+file (inputJSFile) is required. The inputJSFile should be your driver code, all other
+javascript files will merely be sourced (i.e. to access values)
 
 The input list may also include parameters to be passed to the Javascript
 file. See the [Javascript](#Javascript) section for details.
@@ -84,7 +85,10 @@ If you want to load a javascript file then the following should be placed around
 
 Note the use of `require` here. The argument should be a list of all the keys
 specified in require.config (i.e. in the [Examples](#Examples), d3 listed as a
-requirement)
+requirement). The key-value pairs you put inside require.config will be used for
+the "paths" section for RequireJS. For instance, if you have a local version of 
+jquery (same directory as vis_interface), one could put "jquery: 'jquery-1.9.0'" 
+(without the outer quotes) in require.config.
 
 The parameter `element` is the `div` in which the javascript will be
 contained. For example, if you want to add an svg using d3, you can then in your code add:
@@ -122,6 +126,11 @@ walkThroughArgList.js:
 See
 walkThroughArgList.js in the [Examples](#Examples) notebook for a
 demonstration.
+
+All arguments are interpreted as strings. To use a python variable's value
+as one of the arguments, simply add % to the front of it. The interface will
+then pass the string version of that variable as an argument. Thus, if the 
+variable "x" had the value "1", one could pass it as "%x" (without quotes).
 
 #### HTML
 
