@@ -1,6 +1,6 @@
 ## Roundtrip
 
-An interface for loading javascript (notably D3 visualizations) into Jupyter
+An interface for loading Javascript (notably D3 visualizations) into Jupyter
 Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.
 
 - [Getting Started](#Getting-Started)
@@ -38,7 +38,7 @@ To use with your own notebook:
 
 1) Copy `vis_interface.py` and `require.config` into the same directory as your notebook.
 2) Add a new cell and run the magic command `%load_ext vis_interface`
-3) Use the magic commands `%loadVisualization` and `%fetchData` to use this interface (for loading javascript files and fetching data from javascript into python)
+3) Use the magic commands `%loadVisualization` and `%fetchData` to use this interface (for loading Javascript files and fetching data from Javascript into python)
 
 The `%loadVisualization` and `%fetchData` commands are described below.
 
@@ -66,14 +66,32 @@ Input may be of type:
 The focus of Roundtrip is Javascript, but the other files may be useful for
 structuring your visualization and adding data. None but the single Javascript
 file (inputJSFile) is required. The inputJSFile should be your driver code, all other
-javascript files will merely be sourced (i.e. to access values)
+Javascript files will merely be sourced (i.e. to access values)
 
 The input list may also include parameters to be passed to the Javascript
 file. See the [Javascript](#Javascript) section for details.
 
+HTML and CSS files will automatically be sourced and applied to the current visualization.
+Jupyter's CSS stylings may conflict with our your own (try using !important).
+
+CSV and JSON files are also sourced and then passed as file names, meaning that one can access
+the contents by using something like JQuery.
+
+For example, if one was to pass input.js as input1 (see above) containing the code
+
+var x = 12;
+
+Then one could use the following in their driver Javascript code:
+
+$.getScript(argList\[0\], function(){ use the value 'x'}
+
+For CSV files the idea is similar:
+
+(i.e. $.getScript(argList\[0\], function(data){ var valuesFromCSV = data.split(,); someCallBack(valuesFromCSV)})
+
 #### Javascript
 
-If you want to load a javascript file then the following should be placed around your code:
+If you want to load a Javascript file then the following should be placed around your code:
 
 ```
 (function(element) {
@@ -88,7 +106,8 @@ specified in require.config (i.e. in the [Examples](#Examples), d3 listed as a
 requirement). The key-value pairs you put inside require.config will be used for
 the "paths" section for RequireJS. For instance, if you have a local version of 
 jquery (same directory as vis_interface), one could put "jquery: 'jquery-1.9.0'" 
-(without the outer quotes) in require.config.
+(without the outer quotes) in require.config. One can also use CDN links, but they 
+must declare themselves properly (see RequireJS for more info on the "paths" section)
 
 The parameter `element` is the `div` in which the javascript will be
 contained. For example, if you want to add an svg using d3, you can then in your code add:
@@ -128,9 +147,7 @@ walkThroughArgList.js in the [Examples](#Examples) notebook for a
 demonstration.
 
 All arguments are interpreted as strings. To use a python variable's value
-as one of the arguments, simply add % to the front of it. The interface will
-then pass the string version of that variable as an argument. Thus, if the 
-variable "x" had the value "1", one could pass it as "%x" (without quotes).
+as one of the arguments, see [Python values](#Python-values)
 
 #### HTML
 
@@ -147,7 +164,7 @@ Note the value will be passed as a string.
 
 ### Fetching Data
 
-The `fetchData` command allows you to retrieve data from the javascript cells
+The `fetchData` command allows you to retrieve data from the Javascript cells
 you created using their `nameID.` Data from the variable
 `javascriptVariableToFetchFrom` in the `nameID` cell will be set in
 `pythonVariableToFetchInto`.
