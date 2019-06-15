@@ -16,7 +16,6 @@ class Interface(Magics):
         display(Javascript("require.config({ \
                                             baseUrl: './', \
                                             paths: { "+requireInfo+"} });"))
-        print(requireInfo)
         super(Interface, self).__init__(shell)
         # Clean up namespace function
         display(HTML("<script>function cleanUp() { argList =[]; element = null; cell_idx = -1}</script>"))
@@ -38,14 +37,14 @@ class Interface(Magics):
         # Source input files
         # Set up the object to map inout files to what javascript expects
         argList = '<script> var argList = []; var elementTop = null; var cell_idx = -1</script>'
-        display(HTML(argList))
+        displayObj = display(HTML(argList), display_id=True)
         for i in range(2, len(args), 1):
             if("%" in args[i]):
                 #print(self.shell.user_ns[args[i][1:]])
                 args[i] = self.shell.user_ns[args[i][1:]]
             if(isinstance(args[i], str) and "." in args[i]):
                 if("." in args[i] and args[i].split(".")[1] in self.inputType.keys()):
-                    display(HTML("<script src=" + args[i] + " type=" + self.inputType[args[i].split(".")[1]] +"></script>"))
+                    displayObj.update(HTML("<script src=" + args[i] + " type=" + self.inputType[args[i].split(".")[1]] +"></script>"))
                 if(args[i].split(".")[1] == "html" or args[i].split(".")[1] == "css"):
                     fileVal = open(args[i]).read()
                     display(HTML(fileVal))
@@ -53,13 +52,13 @@ class Interface(Magics):
                 args[i] = args[i].replace("\"", "\\\"")
             if(isinstance(args[i], str) and "\n" in args[i]):
                 args[i] = args[i].replace("\n", "\\n")
-            display(Javascript('argList.push("' + str(args[i]) + '")')) 
+            displayObj.update(Javascript('argList.push("' + str(args[i]) + '")')) 
         # Get curent cell id
         self.codeMap[name] = javascriptFile
         preRun = """
         // Grab current context
         elementTop = element.get(0);"""
-        display(Javascript(preRun))
+        displayObj.update(Javascript(preRun))
         self.runViz(name, javascriptFile)
    
     def runViz(self, name, javascriptFile):
