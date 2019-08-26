@@ -14,7 +14,7 @@ Notebooks. Supports transferring data from Python Jupyter cells to Javascript—
 1) Install [Jupyter notebook](https://jupyter.org/install)
 2) Clone this repository:
 ```bash
-get clone https://github.com/hdc-arizona/roundtrip.git
+git clone https://github.com/hdc-arizona/roundtrip.git
 ```
 3) Start the example jupyter notebook:
 ```bash
