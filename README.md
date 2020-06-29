@@ -110,9 +110,13 @@ jquery (same directory as vis_interface), one could put "jquery: 'jquery-1.9.0'"
 must declare themselves properly (see RequireJS for more info on the "paths" section)
 
 The parameter `element` is the `div` in which the javascript will be
-contained. For example, if you want to add an svg using d3, you can then in your code add:
+contained. For example, to add an svg using d3, you can then in your code add:
 
 `var mySVG = d3.select(element).append('svg');`
+
+*Note: that `element` is the go-to variable to select. Javascript code commonly
+uses a call to `.select('body')` or some id'd div when you are trying to append
+an svg. You must use `element`.*
 
 ##### Passing Arguments to your input Javascript
 
