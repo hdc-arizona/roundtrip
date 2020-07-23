@@ -19,7 +19,8 @@ class Interface(Magics):
         super(Interface, self).__init__(shell)
         # Clean up namespace function
         display(HTML("<script>function cleanUp() { argList =[]; element = null; cell_idx = -1}</script>"))
-                
+        display(HTML("<style>.container { width:100% !important; }</style>"))
+              
     inputType = {"js": "text/javascript",
                  "csv": "text/csv",
                  "html": "text/html",
