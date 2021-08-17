@@ -205,3 +205,16 @@ var toBeFetched = {
   })
 })(element);
 ```
+
+### License
+
+Roundtrip is distributed under the terms of the MIT license.
+
+All contributions must be made under the MIT license.  Copyrights in the
+Roundtrip project are retained by contributors.  No copyright assignment is
+required to contribute to Roundtrip.
+
+See [LICENSE](https://github.com/hdc-arizona/roundtrip/blob/master/LICENSE) and
+[NOTICE](https://github.com/hdc-arizona/roundtrip/blob/master/NOTICE) for details.
+
+SPDX-License-Identifier: MIT
