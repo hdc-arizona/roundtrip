@@ -1,33 +1,27 @@
-from re import I
-from IPython.display import Javascript, HTML, display
+
+from IPython.display import Javascript, HTML, display, clear_output
 from IPython import get_ipython
-
-# ------------------------------------------
-# PRE VACATION CONNOR NOTES TO SELF
-#-------------------------------------------
-
+import json
 
 class Roundtrip():
 
     def __init__(self, ipy_shell=get_ipython()):
         self.shell = ipy_shell
         self.tags ={
-            "script": "<script src='{src}' type='{type}'></script>",
+            "script": "<script src='{src}'></script>",
             "style": "<link rel='stylesheet' href='{}'>"
         } 
         self.line = '{tags}\n'
         self.bridges = {}
         self.last_id = None
 
-        # Provide a function to cleanup the namespace of our javascript
-        # display(HTML("<script>function cleanUp() { argList =[]; element = null; cell_idx = -1}</script>"))
+        display(HTML(self.tags["script"].format(src="roundtrip.js")))
 
-    script_map = {"js": "text/javascript",
-                "csv": "text/csv",
+    script_map = {"csv": "text/csv",
                 "json": "text/json"}
 
     def _get_file_type(self, file):
-        return file.split(".")[-1]
+        return file.split(".")[-1];
     
     def _file_formatter(self, file):
         ft = self._get_file_type(file)
@@ -40,54 +34,118 @@ class Roundtrip():
         elif ft == "html":
             return open(file).read()
 
+    def load_webpack(self, file):
+        output_html = ''
+        file = file
+        output_html += self._file_formatter(file)
 
     def load_web_files(self, files):
-        # argList = '<script> var argList = []; var elementTop = null; var cell_idx = -1</script>'
-        output_html = "<script src='roundtrip.js' type='text/javascript'></script>"
+        output_html = ''
+
+        #this initial string is where variable bindings go
+        scripts = ['']
         
         # load files based on their individual properties
-        if type(files) is type([]):
-            for file in files:
+        for file in files:
+            ft = self._get_file_type(file)
+            if ft == "js":
+                scripts.append(open(file).read())
+            else:
                 output_html += self._file_formatter(file)
-                
-        elif type(files) is type(''):
-            file = files
-            output_html += self._file_formatter(file)
 
-        bdg = Bridge(output_html, self.shell)
+        bdg = Bridge(output_html, scripts, self.shell)
         self.bridges[bdg.id] = bdg
         self.last_id = bdg.id
         return id
     
     # Passing to JS is working now
     def pass_to_js(self, js_variable, data):
-        self.bridges[self.last_id].add_javascript("Roundtrip.{} = {}".format(js_variable, str(data)))
+        self.bridges[self.last_id].pass_to_js(js_variable, data)
+
+    def fetch_data(self, js_var, ipy_var):
+        self.bridges[self.last_id].retrieve_from_js(js_var, ipy_var)
+
+    def watch_variable(self, py_var, js_var, to_js_converter=None, from_js_converter=None):
+        self.bridges[self.last_id].pass_by_ref(py_var, js_var, to_js_converter, from_js_converter)
 
     def initialize(self):
         self.bridges[self.last_id].run()
 
 class Bridge():
 
-    def __init__(self, html, ipy_shell=get_ipython()):
+    def __init__(self, html, js, ipy_shell=get_ipython()):
         self.html = html
+        self.scripts = js
         self.shell = ipy_shell
-        self.display = display(HTML(''),display_id=True)
+        self.display = display(HTML(''), display_id=True)
         self.id = self.display.display_id
         args = []
 
+    def _extract_simple_dt(self, dt_str):
+        return dt_str.split("'")[1]
+
+    def _default_converter(self, data):
+        if type(data) in [type(''), type(0), type(0.0)]:
+            return str(data)
+        elif type(data) in [type({}), type([])]:
+            return json.dumps(data)
+        elif 'DataFrame' in str(type(data)) or 'Series' in str(type(data)): 
+            return data.to_json()
+        return data
+
     def run(self):
+        js_exe = ''
+        for script in self.scripts:
+            js_exe += script
+        
         self.display.update(HTML(self.html))
+        display(Javascript(js_exe))
 
     def add_javascript(self, code):
-        self.html += '<script>{}</script>'.format(code)
+        display(Javascript(code))
 
     #overloaded = operator?
-    def pass_to_js(self, js_variable, data):
-        pass
+    def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, converter=None):
+        pass_hook = "\n (function(){{ Roundtrip[\'{0}\'] = {{ \'two_way\':\'{1}\', \'python_var\':\'{2}\', \'type\':\'{3}\', \'data\':\'{4}\'}} }})();\n"
+
+        if datatype is None:
+            datatype = type(data)
+            datatype = self._extract_simple_dt(str(datatype))
+            
+        try:
+            #some default conversion
+            # we may want to push this off to the application
+            # developer
+            if converter == None:
+                data = self._default_converter(data)
+            else:
+                data = converter(data)
+        except:
+            pass
+
+        self.add_javascript(pass_hook.format(js_variable, two_way, python_var, datatype, data))
 
     #overloaded = operator?
-    def retrieve_from_js(self, js_variable):
-        pass
+    def retrieve_from_js(self, js_variable, notebook_var):
+        #TODO: add validator for json vs normal strings
+        hook_template = """
+            (function(){{
+                    var holder = Roundtrip['{src}'];
+                    holder = `\'${{holder}}\'`;
+                    var code = `x = ${{holder}}`;
+                    console.log(code);
+                    IPython.notebook.kernel.execute(code);
+                    }})()
+               """
+        hook = hook_template.format(src=str(js_variable), dest=str(notebook_var))
+        display(Javascript(hook))
+        # self.add_javascript(hook)
 
-    def pass_by_ref(self, varmap, to_js_converter, from_js_converter):
-        print(varmap)
+    # put down explicit write notification (maybe)
+    # watch errors with user documentation
+    # run some stress tests on this
+    # with weird waits for java script
+    # watch gives us an explicit way to link views
+    def pass_by_ref(self, py_var, js_var, to_js_converter, from_js_converter):
+        #we need this converter so data can be used actively
+        self.pass_to_js(js_var, self.shell.user_ns[py_var], two_way="true", python_var=py_var)
