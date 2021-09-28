@@ -1,6 +1,6 @@
 (function(element){
     require(['https://d3js.org/d3.v4.min.js'], function(d3) {
-
+        const Roundtrip = window.Roundtrip;
         const elem = element[0].parentNode.parentNode;
         const data = Roundtrip.test
 

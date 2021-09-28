@@ -106,7 +106,7 @@ class Bridge():
 
     #overloaded = operator?
     def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, converter=None):
-        pass_hook = "\n (function(){{ Roundtrip[\'{0}\'] = {{ \'two_way\':\'{1}\', \'python_var\':\'{2}\', \'type\':\'{3}\', \'data\':\'{4}\'}} }})();\n"
+        pass_hook = "\n (function(){{ window.Roundtrip[\'{0}\'] = {{ \'two_way\':\'{1}\', \'python_var\':\'{2}\', \'type\':\'{3}\', \'data\':\'{4}\'}} }})();\n"
 
         if datatype is None:
             datatype = type(data)
@@ -132,7 +132,7 @@ class Bridge():
             (function(){{
                     var holder = Roundtrip['{src}'];
                     holder = `\'${{holder}}\'`;
-                    var code = `x = ${{holder}}`;
+                    var code = `{dest} = ${{holder}}`;
                     console.log(code);
                     IPython.notebook.kernel.execute(code);
                     }})()

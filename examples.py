@@ -8,6 +8,7 @@ class Basic(Magics):
     def __init__(self, shell):
         super(Basic, self).__init__(shell)
         self.RT = Roundtrip(shell)
+        self.shell = shell
     
     @line_magic
     def basic(self, line):
@@ -18,7 +19,7 @@ class Basic(Magics):
 
         
         #do arg mapping
-        self.RT.pass_to_js("test", "from python code")
+        self.RT.pass_to_js("test", self.shell.user_ns[args[1]])
 
         self.RT.pass_to_js("test2", 4)
 
@@ -33,7 +34,7 @@ class Basic(Magics):
     @line_magic
     def fetch_basic(self, line):
         args = line.split(' ')
-        self.RT.fetch_data('js_df', args[0])
+        self.RT.fetch_data('test', args[0])
 
 
 @magics_class
@@ -59,6 +60,29 @@ class BindingExample(Magics):
         # load javascript code (Roundtrip call)
         # bind variables (Roundtrip call)
 
+@magics_class
+class LineChart(Magics):
+
+    def __init__(self, shell):
+        super(LineChart, self).__init__(shell)
+        self.RT = Roundtrip(shell)
+    
+    @line_magic
+    def line_chart(self, line):
+        args = line.split(' ')
+
+        #load files
+        self.RT.load_web_files(["Examples/dist/linechart_bundle.js", "Examples/source/LineChart/linechart.html"])
+
+
+        self.RT.watch_variable(args[0], "line_df")
+
+        # self.RT.pass_to_js("test2", 4)
+
+        self.RT.initialize()
+        # load javascript code (Roundtrip call)
+        # bind variables (Roundtrip call)
+
 
 @magics_class
 class BarGraph(Magics):
@@ -72,10 +96,10 @@ class BarGraph(Magics):
         args = line.split(' ')
 
         #load files
-        self.RT.load_web_files(["Examples/source/Bar_Graph/bgraph.js", "Examples/source/Bar_Graph/bgraph.html"])
+        self.RT.load_web_files(["Examples/source/BarGraph/bgraph.js", "Examples/source/BarGraph/bgraph.html"])
 
         #do arg mapping
-        self.RT.pass_to_js("data", "Examples/source/Bar_Graph/barsdata.json")
+        self.RT.pass_to_js("data", "Examples/source/BarGraph/barsdata.json")
 
         # self.RT.pass_to_js("test2", 4)
 
@@ -90,7 +114,10 @@ class BarGraph(Magics):
         args = line.split(' ')
         # self.RT.fetch_data('test', args[0])
 
+
+
 def load_ipython_extension(ipython):
     ipython.register_magics(Basic)
     ipython.register_magics(BindingExample)
     ipython.register_magics(BarGraph)
+    ipython.register_magics(LineChart)

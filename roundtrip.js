@@ -40,8 +40,22 @@ function assignedInPython(py_var, token_arr){
     return false;
 }
 
+function buildPythonAssignment(val, py_var){
+    var holder = `'${val}'`;
+    var code = `${py_var} = pd.DataFrame(eval(${holder}))`;
+    return code
+}
+
 var RT_Handler = {
     set(obj, prop, value){
+
+
+
+        if (typeof value === 'object' &&
+        !Array.isArray(value) &&
+        value !== null){
+            return Reflect.set(...arguments);
+        }
 
         var execable_cells = [];
         require(['https://d3js.org/d3.v4.min.js'], function(d3) {
@@ -79,7 +93,10 @@ var RT_Handler = {
                         
                         //A semaphore is used to track how many calls we expect back to set
                         sem = execable_cells.length;
-                        console.log(execable_cells);
+
+                        const code = buildPythonAssignment(value, obj[prop]["python_var"]);
+                        Jupyter.notebook.kernel.execute(code);
+                        Jupyter.notebook.execute_cells(execable_cells);
                 }
                 else{
                     sem -= 1;
@@ -88,26 +105,7 @@ var RT_Handler = {
 
         })
 
-
-        if (typeof value === 'object' &&
-        !Array.isArray(value) &&
-        value !== null){
-            let set = Reflect.set(...arguments);
-            if(execable_cells.len > 0){
-                Jupyter.notebook.execute_cells(execable_cells);
-            }
-            return set;
-        }
-        else {
-            let set = Reflect.set(obj[prop], "data", value);
-            console.log(sem);
-            console.log(execable_cells); 
-            if(execable_cells.len > 0){
-                Jupyter.notebook.execute_cells(execable_cells);
-            }
-
-            return set;
-        }
+        return Reflect.set(obj[prop], "data", value);
     },
     get(obj, prop, reciever){
         // console.log("Get: ",...arguments);
@@ -116,4 +114,4 @@ var RT_Handler = {
     }
 }
 
-var Roundtrip = new Proxy(Roundtrip_Obj, RT_Handler);
+window.Roundtrip = new Proxy(Roundtrip_Obj, RT_Handler);
