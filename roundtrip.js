@@ -13,6 +13,7 @@ function retrieveTextNodes(elem){
     return a;
   }
 
+// TODO: TEST THIS AND MAKE A LOT OF TESTS
 function assignedInPython(py_var, token_arr){
     const equality_tokens = ["=", "+=", "-=", "*=", "/="];
     let var_flg = false;
@@ -40,16 +41,31 @@ function assignedInPython(py_var, token_arr){
     return false;
 }
 
-function buildPythonAssignment(val, py_var){
+function unindentPyCode(code){
+    let uicode = code.split('\n');
+    let indent = 0;
+
+    uicode.forEach((l,i, arr)=>{
+        if(i == 0){
+            indent = l.search(/\S/);
+        }
+        arr[i] = l.slice(indent);
+    })
+    uicode = uicode.join('\n');
+    return uicode;
+}
+
+function buildPythonAssignment(val, py_var, converter){
     var holder = `'${val}'`;
-    var code = `${py_var} = pd.DataFrame(eval(${holder}))`;
+    var code = `${unindentPyCode(converter.code)}`
+    code += `\ntmp = eval(${holder})`;
+    code += `\n${py_var} = ${converter.name}(tmp)`
+
     return code
 }
 
 var RT_Handler = {
     set(obj, prop, value){
-
-
 
         if (typeof value === 'object' &&
         !Array.isArray(value) &&
@@ -62,8 +78,9 @@ var RT_Handler = {
             // When 2 way bound this calls automatically when something changes
             if (obj[prop] !== undefined && obj[prop]["two_way"] === "true"){
                 if(sem === 0){
-                
+                    
                         let cells = Jupyter.notebook.get_cell_elements();
+
                         //Iterate over all unselected cells and find the bound
                         // notebook variable
                         for (const cell_ndx in Object.getOwnPropertyNames(cells)){
@@ -92,15 +109,16 @@ var RT_Handler = {
                         }
                         
                         //A semaphore is used to track how many calls we expect back to set
-                        sem = execable_cells.length;
-
-                        const code = buildPythonAssignment(value, obj[prop]["python_var"]);
+                        // sem = 1;
+                        console.log(obj[prop])
+                        const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
+                        console.log(code);
                         Jupyter.notebook.kernel.execute(code);
                         Jupyter.notebook.execute_cells(execable_cells);
                 }
-                else{
-                    sem -= 1;
-                }
+                // else{
+                    // sem -= 1;
+                // }
             }
 
         })

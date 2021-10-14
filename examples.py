@@ -2,6 +2,15 @@ from IPython.core.magic import Magics, magics_class, line_magic
 from roundtrip import Roundtrip
 import pandas as pd
 
+
+
+def _to_js(data):
+    return data.to_json()
+
+def _from_js(data):
+    return pd.DataFrame(data)
+
+
 @magics_class
 class Basic(Magics):
 
@@ -9,7 +18,7 @@ class Basic(Magics):
         super(Basic, self).__init__(shell)
         self.RT = Roundtrip(shell)
         self.shell = shell
-    
+
     @line_magic
     def basic(self, line):
         args = line.split(' ')
@@ -17,17 +26,14 @@ class Basic(Magics):
         #load files
         self.RT.load_web_files(["Examples/source/Basic/basic.js", "Examples/source/Basic/basic.html"])
 
-        
         #do arg mapping
         self.RT.pass_to_js("test", self.shell.user_ns[args[1]])
 
         self.RT.pass_to_js("test2", 4)
 
-        self.RT.watch_variable(args[0], "js_df")
+        self.RT.watch_variable(args[0], "js_df", to_js_converter=_to_js, from_js_converter=_from_js)
 
         self.RT.initialize()
-        # load javascript code (Roundtrip call)
-        # bind variables (Roundtrip call)
 
         pass
     
@@ -43,45 +49,32 @@ class BindingExample(Magics):
     def __init__(self, shell):
         super(BindingExample, self).__init__(shell)
         self.RT = Roundtrip(shell)
-    
+        
     @line_magic
     def binding_example(self, line):
         args = line.split(' ')
 
         #load files
         self.RT.load_web_files(["Examples/source/BindingExample/binding.js", "Examples/source/BindingExample/binding.html"])
-
-
+        
+        #load variables
         self.RT.watch_variable(args[0], "binding_df")
 
-        # self.RT.pass_to_js("test2", 4)
-
+        #initialize roundtrip
         self.RT.initialize()
-        # load javascript code (Roundtrip call)
-        # bind variables (Roundtrip call)
+
 
 @magics_class
-class LineChart(Magics):
+class WebpackExample(Magics):
 
     def __init__(self, shell):
-        super(LineChart, self).__init__(shell)
+        super(WebpackExample, self).__init__(shell)
         self.RT = Roundtrip(shell)
     
     @line_magic
-    def line_chart(self, line):
-        args = line.split(' ')
-
-        #load files
-        self.RT.load_web_files(["Examples/dist/linechart_bundle.js", "Examples/source/LineChart/linechart.html"])
-
-
-        self.RT.watch_variable(args[0], "line_df")
-
-        # self.RT.pass_to_js("test2", 4)
-
+    def webpack_example(self, line):
+        self.RT.load_web_files(["Examples/dist/index.html"])
         self.RT.initialize()
-        # load javascript code (Roundtrip call)
-        # bind variables (Roundtrip call)
 
 
 @magics_class
@@ -120,4 +113,4 @@ def load_ipython_extension(ipython):
     ipython.register_magics(Basic)
     ipython.register_magics(BindingExample)
     ipython.register_magics(BarGraph)
-    ipython.register_magics(LineChart)
+    ipython.register_magics(WebpackExample)

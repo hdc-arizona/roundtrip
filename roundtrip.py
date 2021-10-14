@@ -2,6 +2,7 @@
 from IPython.display import Javascript, HTML, display, clear_output
 from IPython import get_ipython
 import json
+import inspect
 
 class Roundtrip():
 
@@ -101,12 +102,20 @@ class Bridge():
         self.display.update(HTML(self.html))
         display(Javascript(js_exe))
 
+
     def add_javascript(self, code):
         display(Javascript(code))
 
     #overloaded = operator?
-    def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, converter=None):
-        pass_hook = "\n (function(){{ window.Roundtrip[\'{0}\'] = {{ \'two_way\':\'{1}\', \'python_var\':\'{2}\', \'type\':\'{3}\', \'data\':\'{4}\'}} }})();\n"
+    def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, py_to_js_converter=None, js_to_py_converter=None):
+        pass_hook = """\n (function(){{ 
+            window.Roundtrip[\'{0}\'] = {{ 
+            \'two_way\':\'{1}\',
+            \'python_var\':\'{2}\', 
+            \'type\':\'{3}\', 
+            \'data\':\'{4}\', 
+            \'converter\':{5}, }} 
+        }})();\n"""
 
         if datatype is None:
             datatype = type(data)
@@ -116,18 +125,26 @@ class Bridge():
             #some default conversion
             # we may want to push this off to the application
             # developer
-            if converter == None:
+            if py_to_js_converter == None:
                 data = self._default_converter(data)
             else:
-                data = converter(data)
+                data = py_to_js_converter(data)
         except:
             pass
 
-        self.add_javascript(pass_hook.format(js_variable, two_way, python_var, datatype, data))
+        conv_spec = None
+
+        if js_to_py_converter is not None:
+            conv_spec = {
+                "name":js_to_py_converter.__name__, 
+                "code":inspect.getsource(js_to_py_converter)
+            }
+
+        self.add_javascript(pass_hook.format(js_variable, two_way, python_var, datatype, data, json.dumps(conv_spec)))
 
     #overloaded = operator?
     def retrieve_from_js(self, js_variable, notebook_var):
-        #TODO: add validator for json vs normal strings
+        #TODO: add validator(s)
         hook_template = """
             (function(){{
                     var holder = Roundtrip['{src}'];
@@ -147,5 +164,4 @@ class Bridge():
     # with weird waits for java script
     # watch gives us an explicit way to link views
     def pass_by_ref(self, py_var, js_var, to_js_converter, from_js_converter):
-        #we need this converter so data can be used actively
-        self.pass_to_js(js_var, self.shell.user_ns[py_var], two_way="true", python_var=py_var)
+        self.pass_to_js(js_var, self.shell.user_ns[py_var], two_way="true", python_var=py_var, py_to_js_converter=to_js_converter, js_to_py_converter=from_js_converter)
