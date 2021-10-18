@@ -1,10 +1,23 @@
 
 from IPython.display import Javascript, HTML, display, clear_output
 from IPython import get_ipython
+import io
+import tokenize
 import json
 import inspect
 
-class Roundtrip():
+
+
+def _default_converter(data):
+    if type(data) in [type(''), type(0), type(0.0)]:
+        return str(data)
+    elif type(data) in [type({}), type([])]:
+        return json.dumps(data)
+    elif 'DataFrame' in str(type(data)) or 'Series' in str(type(data)): 
+        return data.to_json()
+    return data
+
+class RoundTrip():
 
     def __init__(self, ipy_shell=get_ipython()):
         self.shell = ipy_shell
@@ -15,11 +28,13 @@ class Roundtrip():
         self.line = '{tags}\n'
         self.bridges = {}
         self.last_id = None
+        self.watched = {}
 
         display(HTML(self.tags["script"].format(src="roundtrip.js")))
 
     script_map = {"csv": "text/csv",
                 "json": "text/json"}
+
 
     def _get_file_type(self, file):
         return file.split(".")[-1];
@@ -55,19 +70,86 @@ class Roundtrip():
                 output_html += self._file_formatter(file)
 
         bdg = Bridge(output_html, scripts, self.shell)
+
+        # bdg.add_javascript("cells = Jupyter.notebook.get_cell_elements();")
+
         self.bridges[bdg.id] = bdg
         self.last_id = bdg.id
+
         return id
     
     # Passing to JS is working now
-    def pass_to_js(self, js_variable, data):
+    def data_to_js(self, data, js_variable):
         self.bridges[self.last_id].pass_to_js(js_variable, data)
 
+
+    #consider seperating watchable and reloadable?
+    def var_to_js(self, jup_var, js_variable, watch=False, to_js_converter=_default_converter, from_js_converter=None):
+
+        if jup_var[0] == '?':
+            if watch is False:
+                raise SyntaxError("""
+                This magic function does not support automatic reloading. 
+                Please remove the '?' character in front of '{0}'.""".format(jup_var[1:]))
+            jup_var = jup_var[1:]
+
+            if(jup_var in self.watched.keys() and js_variable not in self.watched[jup_var]['js_var']):
+                 self.watched[jup_var]['js_var'].append(js_variable)
+            else:
+                self.watched[jup_var] = {'converter':to_js_converter, "js_var": [js_variable]}
+
+        data = self.shell.user_ns[jup_var]
+
+
+        if watch is True:
+            watch = 'true'
+        else:
+            watch = 'false'
+
+        self.bridges[self.last_id].pass_to_js(js_variable, 
+                                                data,
+                                                two_way=watch, 
+                                                python_var=jup_var,
+                                                py_to_js_converter=to_js_converter, 
+                                                js_to_py_converter=from_js_converter)
+
+
+    def manage_jupter_change(self):
+        '''
+            Checks to see if the cell which was just run '_ih', 
+            has an assignment to one or more watched variables.
+            Causes cells with '?<varaible>' refrences to run automatically 
+        '''
+        tokens = [token for token in tokenize.tokenize(io.BytesIO(self.shell.user_ns['_ih'][-1].encode('utf-8')).readline)]
+        assignment_tokens = ['=', '+=', '-=', '*=', '/=', '%=', '//=', '**=', '&=', '|=', '^=', '>>=', '<<=']
+        update_flags = {}
+        update_hook = """\n (function(){{window.Roundtrip[\'{js_var}\'] = \'{data}\';}})();\n"""
+        code = ''
+
+        for var in self.watched.keys():
+            for i, token in enumerate(tokens):
+                if token.string == var:
+                    lookahead = i 
+                    while lookahead < len(tokens) and \
+                        tokenize.tok_name[tokens[lookahead].type] != 'NL':
+                        if tokens[lookahead].string in assignment_tokens:
+                            update_flags[var] = True
+                            break
+                        else:
+                            lookahead += 1
+
+                    if (var in update_flags.keys()):
+                        break
+
+        for flag in update_flags:
+            new_data = self.watched[flag]['converter'](self.shell.user_ns[flag])
+            for var in self.watched[flag]['js_var']:
+                code += update_hook.format(js_var=var, data=new_data)
+        if code != '':
+            display(Javascript(code))
+          
     def fetch_data(self, js_var, ipy_var):
         self.bridges[self.last_id].retrieve_from_js(js_var, ipy_var)
-
-    def watch_variable(self, py_var, js_var, to_js_converter=None, from_js_converter=None):
-        self.bridges[self.last_id].pass_by_ref(py_var, js_var, to_js_converter, from_js_converter)
 
     def initialize(self):
         self.bridges[self.last_id].run()
@@ -80,19 +162,11 @@ class Bridge():
         self.shell = ipy_shell
         self.display = display(HTML(''), display_id=True)
         self.id = self.display.display_id
+        self.converter = _default_converter
         args = []
 
     def _extract_simple_dt(self, dt_str):
         return dt_str.split("'")[1]
-
-    def _default_converter(self, data):
-        if type(data) in [type(''), type(0), type(0.0)]:
-            return str(data)
-        elif type(data) in [type({}), type([])]:
-            return json.dumps(data)
-        elif 'DataFrame' in str(type(data)) or 'Series' in str(type(data)): 
-            return data.to_json()
-        return data
 
     def run(self):
         js_exe = ''
@@ -106,15 +180,20 @@ class Bridge():
     def add_javascript(self, code):
         display(Javascript(code))
 
-    #overloaded = operator?
+
+    # put down explicit write notification (maybe)
+    # watch errors with user documentation
+    # run some stress tests on this
+    # with weird waits for java script
+    # watch gives us an explicit way to link views
     def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, py_to_js_converter=None, js_to_py_converter=None):
         pass_hook = """\n (function(){{ 
-            window.Roundtrip[\'{0}\'] = {{ 
-            \'two_way\':\'{1}\',
-            \'python_var\':\'{2}\', 
-            \'type\':\'{3}\', 
-            \'data\':\'{4}\', 
-            \'converter\':{5}, }} 
+            window.Roundtrip[\'{js_var}\'] = {{ 
+            \'two_way\':\'{binding}\',
+            \'python_var\':\'{py_var}\', 
+            \'type\':\'{type}\', 
+            \'data\':\'{data}\', 
+            \'converter\':{converter}, }} 
         }})();\n"""
 
         if datatype is None:
@@ -129,6 +208,7 @@ class Bridge():
                 data = self._default_converter(data)
             else:
                 data = py_to_js_converter(data)
+                self.converter = py_to_js_converter
         except:
             pass
 
@@ -139,8 +219,16 @@ class Bridge():
                 "name":js_to_py_converter.__name__, 
                 "code":inspect.getsource(js_to_py_converter)
             }
+        
 
-        self.add_javascript(pass_hook.format(js_variable, two_way, python_var, datatype, data, json.dumps(conv_spec)))
+        self.add_javascript(
+            pass_hook.format(
+                js_var=js_variable, 
+                binding=two_way, 
+                py_var=python_var, 
+                type=datatype, 
+                data=data, 
+                converter=json.dumps(conv_spec)))
 
     #overloaded = operator?
     def retrieve_from_js(self, js_variable, notebook_var):
@@ -158,10 +246,5 @@ class Bridge():
         display(Javascript(hook))
         # self.add_javascript(hook)
 
-    # put down explicit write notification (maybe)
-    # watch errors with user documentation
-    # run some stress tests on this
-    # with weird waits for java script
-    # watch gives us an explicit way to link views
-    def pass_by_ref(self, py_var, js_var, to_js_converter, from_js_converter):
-        self.pass_to_js(js_var, self.shell.user_ns[py_var], two_way="true", python_var=py_var, py_to_js_converter=to_js_converter, js_to_py_converter=from_js_converter)
+Roundtrip = RoundTrip()
+Roundtrip.shell.events.register('post_run_cell', Roundtrip.manage_jupter_change)

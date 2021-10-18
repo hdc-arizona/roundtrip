@@ -13,33 +13,17 @@ function retrieveTextNodes(elem){
     return a;
   }
 
-// TODO: TEST THIS AND MAKE A LOT OF TESTS
-function assignedInPython(py_var, token_arr){
-    const equality_tokens = ["=", "+=", "-=", "*=", "/="];
-    let var_flg = false;
-
-    // using normal for loop because t needs to be a number
+function relodable(py_var, token_arr){
+    console.log(py_var, token_arr);
     for(let t = 0; t < token_arr.length; t++){
-        if(var_flg === false && token_arr[t].textContent === py_var){
-            var_flg = true;
-        }
-
-        // TODO: Test for conditions with many whitespace
-        if(var_flg && token_arr[t].textContent.trim() === ""){
-            if(t+1 < token_arr.length && equality_tokens.includes(token_arr[t+1].textContent)){
-                return true;
-            }
-            else{
-                var_flg = false;
-            }
-        } 
-        else if (var_flg && equality_tokens.includes(token_arr[t].textContent)){
+        if(token_arr[t][0] == "?" && token_arr[t].slice(1) === py_var){
             return true;
         }
     }
 
     return false;
 }
+
 
 function unindentPyCode(code){
     let uicode = code.split('\n');
@@ -67,12 +51,14 @@ function buildPythonAssignment(val, py_var, converter){
 var RT_Handler = {
     set(obj, prop, value){
 
+        //Initial pass of value into roundtrip object
         if (typeof value === 'object' &&
         !Array.isArray(value) &&
         value !== null){
             return Reflect.set(...arguments);
         }
 
+        //Subsequent assignments
         var execable_cells = [];
         require(['https://d3js.org/d3.v4.min.js'], function(d3) {
             // When 2 way bound this calls automatically when something changes
@@ -86,39 +72,31 @@ var RT_Handler = {
                         for (const cell_ndx in Object.getOwnPropertyNames(cells)){
                         if((cells[cell_ndx] !== undefined) && cells[cell_ndx].className.includes("unselected") ){
                                 const varselect = d3.select(cells[cell_ndx])
-                                .selectAll(".cm-variable")
+                                .selectAll(".cm-operator")
                                 .filter(function(){
-                                    return d3.select(this).text() === obj[prop]["python_var"]; 
+                                    return d3.select(this).text() === '?'; 
                                 });
 
                                 /**
-                                 * Retrieve all the text from a code block which contains "python_var"
-                                 * We then exclude cells which assign a value into "python_var"
+                                 * Retrieve all the text from a code block which contains "?python_var"
+                                 * We exclude cells which assign a value into "python_var"
                                  * because we do not want to automatically override the work
                                  * done in the visualization.
                                  */
                                 if(!varselect.empty()){
                                     const code_tree = d3.select(cells[cell_ndx]).select(".CodeMirror-code").node()
                                     const text = retrieveTextNodes(code_tree);
-
-                                    if(!assignedInPython(obj[prop]["python_var"], text)){
-                                        execable_cells.push(cell_ndx);
-                                    }
+                                    execable_cells.push(cell_ndx);
                                 }
                             }
                         }
-                        
-                        //A semaphore is used to track how many calls we expect back to set
-                        // sem = 1;
-                        console.log(obj[prop])
+
+                        // TODO:THROW AN ERROR IF CONVERTER == NONE
+                        console.log("Object on 2 way bound call: ", obj[prop], prop)
                         const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
-                        console.log(code);
                         Jupyter.notebook.kernel.execute(code);
                         Jupyter.notebook.execute_cells(execable_cells);
                 }
-                // else{
-                    // sem -= 1;
-                // }
             }
 
         })

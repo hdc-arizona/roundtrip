@@ -1,5 +1,5 @@
 from IPython.core.magic import Magics, magics_class, line_magic
-from roundtrip import Roundtrip
+from roundtrip import Roundtrip as RT
 import pandas as pd
 
 
@@ -16,7 +16,6 @@ class Basic(Magics):
 
     def __init__(self, shell):
         super(Basic, self).__init__(shell)
-        self.RT = Roundtrip(shell)
         self.shell = shell
 
     @line_magic
@@ -24,23 +23,25 @@ class Basic(Magics):
         args = line.split(' ')
 
         #load files
-        self.RT.load_web_files(["Examples/source/Basic/basic.js", "Examples/source/Basic/basic.html"])
+        RT.load_web_files(["Examples/source/Basic/basic.js", "Examples/source/Basic/basic.html"])
+
+        print(args)
 
         #do arg mapping
-        self.RT.pass_to_js("test", self.shell.user_ns[args[1]])
+        RT.var_to_js(args[1], "test")
 
-        self.RT.pass_to_js("test2", 4)
+        RT.data_to_js(4, "test_2")
 
-        self.RT.watch_variable(args[0], "js_df", to_js_converter=_to_js, from_js_converter=_from_js)
+        RT.var_to_js(args[0], "js_df", watch=True,  to_js_converter=_to_js, from_js_converter=_from_js)
 
-        self.RT.initialize()
+        RT.initialize()
 
         pass
     
     @line_magic
     def fetch_basic(self, line):
         args = line.split(' ')
-        self.RT.fetch_data('test', args[0])
+        RT.fetch_data('test', args[0])
 
 
 @magics_class
@@ -48,33 +49,31 @@ class BindingExample(Magics):
 
     def __init__(self, shell):
         super(BindingExample, self).__init__(shell)
-        self.RT = Roundtrip(shell)
         
     @line_magic
     def binding_example(self, line):
         args = line.split(' ')
 
         #load files
-        self.RT.load_web_files(["Examples/source/BindingExample/binding.js", "Examples/source/BindingExample/binding.html"])
+        RT.load_web_files(["Examples/source/BindingExample/binding.js", "Examples/source/BindingExample/binding.html"])
         
         #load variables
-        self.RT.watch_variable(args[0], "binding_df")
+        RT.var_to_js(args[0], "binding_df", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
 
         #initialize roundtrip
-        self.RT.initialize()
+        RT.initialize()
 
 
-@magics_class
-class WebpackExample(Magics):
+# @magics_class
+# class WebpackExample(Magics):
 
-    def __init__(self, shell):
-        super(WebpackExample, self).__init__(shell)
-        self.RT = Roundtrip(shell)
+#     def __init__(self, shell):
+#         super(WebpackExample, self).__init__(shell)
     
-    @line_magic
-    def webpack_example(self, line):
-        self.RT.load_web_files(["Examples/dist/index.html"])
-        self.RT.initialize()
+#     @line_magic
+#     def webpack_example(self, line):
+#         RT.load_web_files(["Examples/dist/index.html"])
+#         RT.initialize()
 
 
 @magics_class
@@ -82,21 +81,18 @@ class BarGraph(Magics):
 
     def __init__(self, shell):
         super(BarGraph, self).__init__(shell)
-        self.RT = Roundtrip(shell)
     
     @line_magic
     def bargraph(self, line):
         args = line.split(' ')
 
         #load files
-        self.RT.load_web_files(["Examples/source/BarGraph/bgraph.js", "Examples/source/BarGraph/bgraph.html"])
+        RT.load_web_files(["Examples/source/BarGraph/bgraph.js", "Examples/source/BarGraph/bgraph.html"])
 
         #do arg mapping
-        self.RT.pass_to_js("data", "Examples/source/BarGraph/barsdata.json")
+        RT.data_to_js("Examples/source/BarGraph/barsdata.json", "data")
 
-        # self.RT.pass_to_js("test2", 4)
-
-        self.RT.initialize()
+        RT.initialize()
         # load javascript code (Roundtrip call)
         # bind variables (Roundtrip call)
 
@@ -105,12 +101,22 @@ class BarGraph(Magics):
     @line_magic
     def fetch_bars(self, line):
         args = line.split(' ')
-        # self.RT.fetch_data('test', args[0])
+        # RT.fetch_data('test', args[0])
 
 
+@magics_class
+class Table(Magics):
+    def __init__(self, shell):
+        super(Table, self).__init__(shell)
+    
+    @line_magic
+    def bargraph(self, line):
+        args = line.split(' ')
+
+        RT.load_web_files(['Examples/dist/table_bundle.html'])
 
 def load_ipython_extension(ipython):
     ipython.register_magics(Basic)
     ipython.register_magics(BindingExample)
     ipython.register_magics(BarGraph)
-    ipython.register_magics(WebpackExample)
+    ipython.register_magics(Table)
