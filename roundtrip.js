@@ -1,30 +1,13 @@
 var Roundtrip_Obj = {};
-var TypeMap = {};
-var sem = 0; 
+var refresh_cycle = false;
 
-function retrieveTextNodes(elem){
-    /**
-     * Adapted from the stack overflow answer: https://stackoverflow.com/questions/10730309/find-all-text-nodes-in-html-page
-     */
-    var n, a=[], walk=document.createTreeWalker(elem,NodeFilter.SHOW_TEXT,null,false);
-    while(n=walk.nextNode()){
-        a.push(n);
-    }
-    return a;
-  }
-
-function relodable(py_var, token_arr){
-    console.log(py_var, token_arr);
-    for(let t = 0; t < token_arr.length; t++){
-        if(token_arr[t][0] == "?" && token_arr[t].slice(1) === py_var){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-
+/**
+ * @name unindentPyCode
+ * @description Removes leading indentations from a python code string.
+ * 
+ * @param {string} code Python code in string form
+ * @returns Passed code string but with no leading indentations
+ */
 function unindentPyCode(code){
     let uicode = code.split('\n');
     let indent = 0;
@@ -39,6 +22,15 @@ function unindentPyCode(code){
     return uicode;
 }
 
+/**
+ * @name buildPythonAssignment
+ * @description Builds up a python code string which assigns javascript data back into jypyter notebook
+ * 
+ * @param {string} val This is data assigned back to the python code
+ * @param {string} py_var This is the variable into which val is assigned
+ * @param {string} converter This is a definition of a python function which translates data back to the desired format
+ * @returns The python code to be run in the jupyter shell
+ */
 function buildPythonAssignment(val, py_var, converter){
     var holder = `'${val}'`;
     var code = `${unindentPyCode(converter.code)}`
@@ -48,58 +40,159 @@ function buildPythonAssignment(val, py_var, converter){
     return code
 }
 
+/**
+ * @name getCurrentCellID
+ * @description Returns the id of the cell which is currently running.
+ * @returns The id of the cell currently running
+ * @note The key-1 (prior cell) is returned because Jupyter updates the dom denoting
+ *      selected nodes before running has completed
+ */
+function getCurrentCellID(){
+    let id;
+    let cells = Jupyter.notebook.get_cell_elements();
+
+    for(let key in Object.keys(cells)){{
+        if(cells[key] !== undefined && !cells[key].className.includes('unselected')){{
+            id = key-1;
+        }}
+    }}
+
+    return Number(id);
+}
+
+/**
+ * @name RT_Handler
+ * @description A wrapper for our roundtrip object. It is called as a proxy for the
+ *      roundtrip object defined above. This enables us to define custom call backs for
+ *      gets and sets on the roundtrip object. The custom set handles necessary data conversion,
+ *      the registering of two-way bound variables and automatic updating of watched cells. The get
+ *      allows users to interact with the underlying object without worrying about the proxy.
+ */
 var RT_Handler = {
+
     set(obj, prop, value){
-
         //Initial pass of value into roundtrip object
-        if (typeof value === 'object' &&
-        !Array.isArray(value) &&
-        value !== null){
-            return Reflect.set(...arguments);
+        if (typeof value === 'object' && value.hasOwnProperty('origin') && value.origin == 'INIT'){
+            /**
+             * In this code block we need to check if there is a two-way array 
+             * of id's already defined and add to it or remove from it
+             */
+            let id = window.getCurrentCellID();
+            value.id = id;
+            let new_val = value;
+
+            if(refresh_cycle){
+                new_val = obj[prop];
+                new_val.data = value.data;
+                return Reflect.set(obj, prop, new_val);
+            }
+
+            if(obj[prop] != undefined){
+                new_val = obj[prop];
+                if(!new_val.two_way.includes(value.id) && value.two_way === true ){
+                    console.log("PUSH NEW VALUE", prop, value.id);
+                    new_val.two_way.push(value.id);
+                }
+                else if(new_val.two_way.includes(value.id) && value.two_way === false){    
+                    const index = new_val.two_way.indexOf(value.id);
+                    if (index > -1) {
+                        new_val.two_way.splice(index, 1);
+                    }
+                }
+            }
+            else{
+                if(new_val.two_way == true){
+                    console.log("CREATE WITH NEW VALUE", prop, value.id);
+                    new_val.two_way = [value.id];
+                }
+                else{
+                    new_val.two_way = [];
+                }
+                delete new_val.id;
+                delete new_val.from_py;
+            }
+
+            return Reflect.set(obj, prop, new_val);
         }
+        else {
+            //Subsequent assignments
+            var execable_cells = [];
+            let origin = 'STANDARD';
 
-        //Subsequent assignments
-        var execable_cells = [];
-        require(['https://d3js.org/d3.v4.min.js'], function(d3) {
-            // When 2 way bound this calls automatically when something changes
-            if (obj[prop] !== undefined && obj[prop]["two_way"] === "true"){
-                if(sem === 0){
-                    
-                        let cells = Jupyter.notebook.get_cell_elements();
+            if (typeof value === 'object' && 
+                value.hasOwnProperty('origin') && 
+                value.origin == 'PYASSIGN'){
+                
+                origin = value.origin;
+                value = value.data;
+            }
 
-                        //Iterate over all unselected cells and find the bound
-                        // notebook variable
-                        for (const cell_ndx in Object.getOwnPropertyNames(cells)){
-                        if((cells[cell_ndx] !== undefined) && cells[cell_ndx].className.includes("unselected") ){
-                                const varselect = d3.select(cells[cell_ndx])
-                                .selectAll(".cm-operator")
-                                .filter(function(){
-                                    return d3.select(this).text() === '?'; 
-                                });
+            require(['https://d3js.org/d3.v4.min.js'], function(d3) {
 
-                                /**
-                                 * Retrieve all the text from a code block which contains "?python_var"
-                                 * We exclude cells which assign a value into "python_var"
-                                 * because we do not want to automatically override the work
-                                 * done in the visualization.
-                                 */
-                                if(!varselect.empty()){
-                                    const code_tree = d3.select(cells[cell_ndx]).select(".CodeMirror-code").node()
-                                    const text = retrieveTextNodes(code_tree);
-                                    execable_cells.push(cell_ndx);
+                // When 2 way bound this calls automatically when something changes
+                if (obj[prop] !== undefined && obj[prop]["two_way"].length > 0){
+                    let cells = Jupyter.notebook.get_cell_elements();
+                    let current_cell;
+
+                    //Iterate over all unselected cells and just set the data
+                    // without updating if our current cell is not two way bound
+                    for (const cell_ndx in Object.getOwnPropertyNames(cells)){
+                        if(cells[cell_ndx] !== undefined && !cells[cell_ndx].className.includes("unselected")){
+                            current_cell = Number(cell_ndx);
+                            
+                            if(origin == 'STANDARD'){
+                                if (!obj[prop]['two_way'].includes(current_cell)){
+                                    return Reflect.set(obj[prop], "data", value);
                                 }
                             }
                         }
+                    }
 
-                        // TODO:THROW AN ERROR IF CONVERTER == NONE
-                        console.log("Object on 2 way bound call: ", obj[prop], prop)
-                        const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
-                        Jupyter.notebook.kernel.execute(code);
-                        Jupyter.notebook.execute_cells(execable_cells);
+
+                    /**
+                     * We now have a list of registered cells we can execute.
+                     * So we look through our javascript variables to see if they
+                     * are bound to the same py variable as our current assignment
+                     * TODO: Make this list update when cells are moved up or down
+                     */
+                    let py_var =  obj[prop]["python_var"];
+                    for(let js_var in obj){
+                        if(obj[js_var]["python_var"] == py_var){
+                            let clls = obj[js_var]["two_way"].filter(x => x != current_cell );
+                            execable_cells = execable_cells.concat(clls);
+                        }
+                    }
+
+                    console.log("Exec cells: ", execable_cells);
+
+                    // TODO:THROW AN ERROR IF CONVERTER == NONE
+                    const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
+                    Jupyter.notebook.kernel.execute(code);
+
+                    refresh_cycle = true;
+                    Jupyter.notebook.execute_cells(execable_cells);
+
+                    /**
+                     * Test every half second to see if some of the
+                     * jupyter cells are still running. Avoids a race condition
+                     * where incorrect ids were stored in our roundtrip object.
+                     */
+                    const test_running = function(){
+                        runtest = d3.selectAll(".running");
+                        if(runtest.empty()){
+                            refresh_cycle = false;
+                            return;
+                        }
+                        else{
+                            setTimeout(test_running, 500);
+                        }
+                    }
+
+                    test_running();
                 }
-            }
 
-        })
+            });
+        }   
 
         return Reflect.set(obj[prop], "data", value);
     },

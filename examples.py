@@ -110,10 +110,14 @@ class Table(Magics):
         super(Table, self).__init__(shell)
     
     @line_magic
-    def bargraph(self, line):
+    def show_table(self, line):
         args = line.split(' ')
 
-        RT.load_web_files(['Examples/dist/table_bundle.html'])
+        RT.load_webpack('Examples/dist/index.html')
+
+        RT.var_to_js(args[0], "table_src", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
+    
+        RT.initialize()
 
 def load_ipython_extension(ipython):
     ipython.register_magics(Basic)

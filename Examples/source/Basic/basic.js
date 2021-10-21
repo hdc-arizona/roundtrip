@@ -24,7 +24,6 @@
             pivot.push(tmp);
         }
 
-        console.log(pivot);
 
         var df_enter = d3.select(elem).select("#bound1")
             .selectAll(".data-elem")
@@ -45,7 +44,6 @@
 
         d3.select(elem).select("#binding-demo")
                     .on("click", function(){
-                        console.log(JSON.stringify(df));
                         Roundtrip.js_df = JSON.stringify(df);
                     })
         

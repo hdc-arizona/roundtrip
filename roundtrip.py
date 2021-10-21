@@ -29,6 +29,7 @@ class RoundTrip():
         self.bridges = {}
         self.last_id = None
         self.watched = {}
+        self.scrid = 0
 
         display(HTML(self.tags["script"].format(src="roundtrip.js")))
 
@@ -54,6 +55,20 @@ class RoundTrip():
         output_html = ''
         file = file
         output_html += self._file_formatter(file)
+
+        # This line is needed to expose the current `element` to the webpack bundled scripts as though
+        # the scripts were run using display(Javascript()).
+        scope_var = '<script id="script-{id}">var element = document.getElementById("script-{id}").parentNode;</script>'.format(id=self.scrid) 
+        output_html = scope_var + output_html
+
+        bdg = Bridge(output_html, ipy_shell=self.shell)
+
+        self.scrid += 1
+
+        self.bridges[bdg.id] = bdg
+        self.last_id = bdg.id
+
+        return id
 
     def load_web_files(self, files):
         output_html = ''
@@ -91,20 +106,19 @@ class RoundTrip():
                 raise SyntaxError("""
                 This magic function does not support automatic reloading. 
                 Please remove the '?' character in front of '{0}'.""".format(jup_var[1:]))
+            else:
+                watch = 'true'
+            
             jup_var = jup_var[1:]
 
             if(jup_var in self.watched.keys() and js_variable not in self.watched[jup_var]['js_var']):
                  self.watched[jup_var]['js_var'].append(js_variable)
             else:
                 self.watched[jup_var] = {'converter':to_js_converter, "js_var": [js_variable]}
-
-        data = self.shell.user_ns[jup_var]
-
-
-        if watch is True:
-            watch = 'true'
         else:
             watch = 'false'
+
+        data = self.shell.user_ns[jup_var]
 
         self.bridges[self.last_id].pass_to_js(js_variable, 
                                                 data,
@@ -115,15 +129,21 @@ class RoundTrip():
 
 
     def manage_jupter_change(self):
-        '''
-            Checks to see if the cell which was just run '_ih', 
+        """
+            Checks to see if the cell which was just run, '_ih', 
             has an assignment to one or more watched variables.
             Causes cells with '?<varaible>' refrences to run automatically 
-        '''
+        """
+
         tokens = [token for token in tokenize.tokenize(io.BytesIO(self.shell.user_ns['_ih'][-1].encode('utf-8')).readline)]
         assignment_tokens = ['=', '+=', '-=', '*=', '/=', '%=', '//=', '**=', '&=', '|=', '^=', '>>=', '<<=']
         update_flags = {}
-        update_hook = """\n (function(){{window.Roundtrip[\'{js_var}\'] = \'{data}\';}})();\n"""
+        update_hook = """\n (function(){{
+                                window.Roundtrip[\'{js_var}\'] = {{
+                                    \'data\': \'{data}\',
+                                    \'origin\': \'PYASSIGN\'
+                                }};
+                            }})();\n"""
         code = ''
 
         for var in self.watched.keys():
@@ -156,7 +176,7 @@ class RoundTrip():
 
 class Bridge():
 
-    def __init__(self, html, js, ipy_shell=get_ipython()):
+    def __init__(self, html, js=None, ipy_shell=get_ipython()):
         self.html = html
         self.scripts = js
         self.shell = ipy_shell
@@ -169,12 +189,14 @@ class Bridge():
         return dt_str.split("'")[1]
 
     def run(self):
-        js_exe = ''
-        for script in self.scripts:
-            js_exe += script
-        
         self.display.update(HTML(self.html))
-        display(Javascript(js_exe))
+
+        if self.scripts is not None:
+            js_exe = ''
+            for script in self.scripts:
+                js_exe += script
+    
+            display(Javascript(js_exe))
 
 
     def add_javascript(self, code):
@@ -187,13 +209,16 @@ class Bridge():
     # with weird waits for java script
     # watch gives us an explicit way to link views
     def pass_to_js(self, js_variable, data, two_way='false', python_var='', datatype=None, py_to_js_converter=None, js_to_py_converter=None):
-        pass_hook = """\n (function(){{ 
-            window.Roundtrip[\'{js_var}\'] = {{ 
-            \'two_way\':\'{binding}\',
-            \'python_var\':\'{py_var}\', 
-            \'type\':\'{type}\', 
-            \'data\':\'{data}\', 
-            \'converter\':{converter}, }} 
+        # This may have a race condition; keep an eye on that.
+        pass_hook = """\n (function(){{
+            window.Roundtrip[\'{js_var}\'] = {{
+                \'origin\': \'INIT\',
+                \'two_way\': {binding},
+                \'python_var\':\'{py_var}\', 
+                \'type\':\'{type}\', 
+                \'data\':\'{data}\', 
+                \'converter\':{converter},
+            }};
         }})();\n"""
 
         if datatype is None:
