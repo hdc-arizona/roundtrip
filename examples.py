@@ -1,5 +1,6 @@
 from IPython.core.magic import Magics, magics_class, line_magic
 from roundtrip import Roundtrip as RT
+import json
 import pandas as pd
 
 
@@ -8,6 +9,7 @@ def _to_js(data):
     return data.to_json()
 
 def _from_js(data):
+    data = json.loads(data)
     return pd.DataFrame(data)
 
 
@@ -113,14 +115,40 @@ class Table(Magics):
     def show_table(self, line):
         args = line.split(' ')
 
-        RT.load_webpack('Examples/dist/index.html')
+        RT.load_webpack('Examples/dist/table_bundle.html')
 
         RT.var_to_js(args[0], "table_src", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
     
         RT.initialize()
+
+@magics_class
+class Scatter(Magics):
+    def __init__(self, shell):
+        super(Scatter, self).__init__(shell)
+
+    @line_magic
+    def scatter_plt(self, line):
+        args = line.split(' ')
+
+        RT.load_webpack('Examples/dist/scatter_bundle.html')
+
+        RT.var_to_js(args[0], "scatter_src", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
+
+        if len(args) > 1:
+            RT.var_to_js(args[1], "subselection", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
+    
+        RT.initialize()
+    
+    @line_magic
+    def get_filter(self, line):
+        args = line.split(' ')
+        RT.fetch_data("exclude", args[0])
+
+
 
 def load_ipython_extension(ipython):
     ipython.register_magics(Basic)
     ipython.register_magics(BindingExample)
     ipython.register_magics(BarGraph)
     ipython.register_magics(Table)
+    ipython.register_magics(Scatter)

@@ -34,7 +34,7 @@ function unindentPyCode(code){
 function buildPythonAssignment(val, py_var, converter){
     var holder = `'${val}'`;
     var code = `${unindentPyCode(converter.code)}`
-    code += `\ntmp = eval(${holder})`;
+    code += `\ntmp = ${holder}`;
     code += `\n${py_var} = ${converter.name}(tmp)`
 
     return code
@@ -69,18 +69,20 @@ function getCurrentCellID(){
  *      allows users to interact with the underlying object without worrying about the proxy.
  */
 var RT_Handler = {
-
     set(obj, prop, value){
         //Initial pass of value into roundtrip object
         if (typeof value === 'object' && value.hasOwnProperty('origin') && value.origin == 'INIT'){
+            
             /**
-             * In this code block we need to check if there is a two-way array 
-             * of id's already defined and add to it or remove from it
+             * In this code block we need to check if there is already a 
+             * an array of id's which are two way bound already defined and 
+             * add to it or remove from it
              */
             let id = window.getCurrentCellID();
             value.id = id;
             let new_val = value;
 
+            // Block updating bindings while jupyter is running
             if(refresh_cycle){
                 new_val = obj[prop];
                 new_val.data = value.data;
@@ -89,8 +91,8 @@ var RT_Handler = {
 
             if(obj[prop] != undefined){
                 new_val = obj[prop];
+                new_val.data = value.data;
                 if(!new_val.two_way.includes(value.id) && value.two_way === true ){
-                    console.log("PUSH NEW VALUE", prop, value.id);
                     new_val.two_way.push(value.id);
                 }
                 else if(new_val.two_way.includes(value.id) && value.two_way === false){    
@@ -102,7 +104,6 @@ var RT_Handler = {
             }
             else{
                 if(new_val.two_way == true){
-                    console.log("CREATE WITH NEW VALUE", prop, value.id);
                     new_val.two_way = [value.id];
                 }
                 else{
@@ -115,6 +116,17 @@ var RT_Handler = {
             return Reflect.set(obj, prop, new_val);
         }
         else {
+            if(obj[prop] === undefined){
+                obj[prop] = {
+                    two_way: [],
+                    origin: "JS",
+                    data: null,
+                    python_var: "",
+                    converter: null,
+                    type: typeof(value)
+                }
+            }
+
             //Subsequent assignments
             var execable_cells = [];
             let origin = 'STANDARD';
@@ -131,20 +143,15 @@ var RT_Handler = {
 
                 // When 2 way bound this calls automatically when something changes
                 if (obj[prop] !== undefined && obj[prop]["two_way"].length > 0){
-                    let cells = Jupyter.notebook.get_cell_elements();
-                    let current_cell;
+
+                    let current_cell = Jupyter.notebook.get_selected_index();
+                    //Jupyter.notebook.select(i);
 
                     //Iterate over all unselected cells and just set the data
                     // without updating if our current cell is not two way bound
-                    for (const cell_ndx in Object.getOwnPropertyNames(cells)){
-                        if(cells[cell_ndx] !== undefined && !cells[cell_ndx].className.includes("unselected")){
-                            current_cell = Number(cell_ndx);
-                            
-                            if(origin == 'STANDARD'){
-                                if (!obj[prop]['two_way'].includes(current_cell)){
-                                    return Reflect.set(obj[prop], "data", value);
-                                }
-                            }
+                    if(origin == 'STANDARD'){
+                        if (!obj[prop]['two_way'].includes(current_cell)){
+                            return Reflect.set(obj[prop], "data", value);
                         }
                     }
 
@@ -167,7 +174,12 @@ var RT_Handler = {
 
                     // TODO:THROW AN ERROR IF CONVERTER == NONE
                     const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
-                    Jupyter.notebook.kernel.execute(code);
+                    
+                    //TODO: Turn this into a function that manages error reporting and printing
+                    Jupyter.notebook.kernel.execute(code, { shell:{
+                                                            reply: function(r){console.log("Response from shell- USE FOR ERROT REPORTING!", r)}
+                                                        }
+                                                    });
 
                     refresh_cycle = true;
                     Jupyter.notebook.execute_cells(execable_cells);

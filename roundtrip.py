@@ -58,7 +58,11 @@ class RoundTrip():
 
         # This line is needed to expose the current `element` to the webpack bundled scripts as though
         # the scripts were run using display(Javascript()).
-        scope_var = '<script id="script-{id}">var element = document.getElementById("script-{id}").parentNode;</script>'.format(id=self.scrid) 
+        scope_var = """
+                    <script id="script-{id}">
+                        var element = document.getElementById("script-{id}").parentNode;
+                        //element.on('click', function(){{}})
+                    </script>""".format(id=self.scrid) 
         output_html = scope_var + output_html
 
         bdg = Bridge(output_html, ipy_shell=self.shell)
@@ -255,7 +259,6 @@ class Bridge():
                 data=data, 
                 converter=json.dumps(conv_spec)))
 
-    #overloaded = operator?
     def retrieve_from_js(self, js_variable, notebook_var):
         #TODO: add validator(s)
         hook_template = """
@@ -263,7 +266,6 @@ class Bridge():
                     var holder = Roundtrip['{src}'];
                     holder = `\'${{holder}}\'`;
                     var code = `{dest} = ${{holder}}`;
-                    console.log(code);
                     IPython.notebook.kernel.execute(code);
                     }})()
                """
