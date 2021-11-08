@@ -2,7 +2,10 @@ import * as d3 from 'd3';
 import './table.css';
 
 let json = window.Roundtrip['table_src']
+// console.log(json);
 let data = JSON.parse(json)
+
+// console.log(data);
 
 var pivot = []
 for(let i of Object.keys(data['Code'])){

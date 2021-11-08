@@ -1,5 +1,6 @@
 var Roundtrip_Obj = {};
 var refresh_cycle = false;
+var clicked_cell = null;
 
 /**
  * @name unindentPyCode
@@ -40,25 +41,22 @@ function buildPythonAssignment(val, py_var, converter){
     return code
 }
 
-/**
- * @name getCurrentCellID
- * @description Returns the id of the cell which is currently running.
- * @returns The id of the cell currently running
- * @note The key-1 (prior cell) is returned because Jupyter updates the dom denoting
- *      selected nodes before running has completed
- */
-function getCurrentCellID(){
-    let id;
+
+function bindClickDetectToCells(){
     let cells = Jupyter.notebook.get_cell_elements();
 
-    for(let key in Object.keys(cells)){{
-        if(cells[key] !== undefined && !cells[key].className.includes('unselected')){{
-            id = key-1;
-        }}
-    }}
+    for(let i in Object.keys(cells)){
+        cell = cells[i];
 
-    return Number(id);
+        if(cell !== undefined){
+            cell.addEventListener('mousedown', () => {
+                    clicked_cell = i;
+                }, true)
+        }
+    }
 }
+
+bindClickDetectToCells();
 
 /**
  * @name RT_Handler
@@ -70,6 +68,7 @@ function getCurrentCellID(){
  */
 var RT_Handler = {
     set(obj, prop, value){
+
         //Initial pass of value into roundtrip object
         if (typeof value === 'object' && value.hasOwnProperty('origin') && value.origin == 'INIT'){
             
@@ -78,8 +77,8 @@ var RT_Handler = {
              * an array of id's which are two way bound already defined and 
              * add to it or remove from it
              */
-            let id = window.getCurrentCellID();
-            value.id = id;
+            let ida = Jupyter.notebook.get_selected_index()-1;
+            value.id = ida;
             let new_val = value;
 
             // Block updating bindings while jupyter is running
@@ -89,28 +88,46 @@ var RT_Handler = {
                 return Reflect.set(obj, prop, new_val);
             }
 
+
             if(obj[prop] != undefined){
                 new_val = obj[prop];
                 new_val.data = value.data;
-                if(!new_val.two_way.includes(value.id) && value.two_way === true ){
-                    new_val.two_way.push(value.id);
+                
+                if(value.two_way === true){
+                    if(!Object.keys(new_val.two_way).includes(value['python_var'])){
+                        new_val.two_way[value['python_var']] = [];
+                    }
+
+                    let pybinding = new_val.two_way[value['python_var']];
+
+                    if(!pybinding.includes(value.id)){
+                        pybinding.push(value.id);
+                    }
+
                 }
-                else if(new_val.two_way.includes(value.id) && value.two_way === false){    
-                    const index = new_val.two_way.indexOf(value.id);
+
+                    
+
+                else if(value.two_way === false && Object.keys(new_val.two_way).includes(value['python_var'])){
+                    let pybinding = new_val.two_way[value['python_var']];
+                    const index = pybinding.indexOf(value.id);
+                    
                     if (index > -1) {
-                        new_val.two_way.splice(index, 1);
+                        pybinding.splice(index, 1);
                     }
                 }
             }
             else{
                 if(new_val.two_way == true){
-                    new_val.two_way = [value.id];
+                    new_val.two_way = {};
+                    new_val.two_way[value['python_var']] = [value.id];
                 }
                 else{
-                    new_val.two_way = [];
+                    new_val.two_way = {};
                 }
                 delete new_val.id;
                 delete new_val.from_py;
+                delete new_val.python_var;
             }
 
             return Reflect.set(obj, prop, new_val);
@@ -118,7 +135,7 @@ var RT_Handler = {
         else {
             if(obj[prop] === undefined){
                 obj[prop] = {
-                    two_way: [],
+                    two_way: {},
                     origin: "JS",
                     data: null,
                     python_var: "",
@@ -142,15 +159,22 @@ var RT_Handler = {
             require(['https://d3js.org/d3.v4.min.js'], function(d3) {
 
                 // When 2 way bound this calls automatically when something changes
-                if (obj[prop] !== undefined && obj[prop]["two_way"].length > 0){
+                if (obj[prop] !== undefined && Object.keys(obj[prop]["two_way"]).length > 0){
 
-                    let current_cell = Jupyter.notebook.get_selected_index();
-                    //Jupyter.notebook.select(i);
+                    let current_cell = Number(clicked_cell);
+                    let py_var = '';
 
-                    //Iterate over all unselected cells and just set the data
-                    // without updating if our current cell is not two way bound
+                    //ust set the data without updating if our current cell is not two way bound
                     if(origin == 'STANDARD'){
-                        if (!obj[prop]['two_way'].includes(current_cell)){
+                        let found = false;
+                        for(let key in obj[prop]["two_way"]){
+                            if (obj[prop]["two_way"][key].includes(current_cell)){
+                                found = true;
+                                py_var = key;
+                            }
+                        }
+
+                        if(!found){
                             return Reflect.set(obj[prop], "data", value);
                         }
                     }
@@ -162,18 +186,19 @@ var RT_Handler = {
                      * are bound to the same py variable as our current assignment
                      * TODO: Make this list update when cells are moved up or down
                      */
-                    let py_var =  obj[prop]["python_var"];
+
                     for(let js_var in obj){
-                        if(obj[js_var]["python_var"] == py_var){
-                            let clls = obj[js_var]["two_way"].filter(x => x != current_cell );
+                        let boundpyvars =  Object.keys(obj[js_var]["two_way"]);
+
+                        if(boundpyvars.includes(py_var)){
+                            let clls = obj[js_var]["two_way"][py_var].filter(x => x != current_cell );
                             execable_cells = execable_cells.concat(clls);
                         }
                     }
 
-                    console.log("Exec cells: ", execable_cells);
 
                     // TODO:THROW AN ERROR IF CONVERTER == NONE
-                    const code = buildPythonAssignment(value, obj[prop]["python_var"], obj[prop]["converter"]);
+                    const code = buildPythonAssignment(value, py_var, obj[prop]["converter"]);
                     
                     //TODO: Turn this into a function that manages error reporting and printing
                     Jupyter.notebook.kernel.execute(code, { shell:{

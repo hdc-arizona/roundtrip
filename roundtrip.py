@@ -9,7 +9,9 @@ import inspect
 
 
 def _default_converter(data):
-    if type(data) in [type(''), type(0), type(0.0)]:
+    if data is None:
+        return '{}'
+    elif type(data) in [type(''), type(0), type(0.0)]:
         return str(data)
     elif type(data) in [type({}), type([])]:
         return json.dumps(data)
@@ -61,7 +63,6 @@ class RoundTrip():
         scope_var = """
                     <script id="script-{id}">
                         var element = document.getElementById("script-{id}").parentNode;
-                        //element.on('click', function(){{}})
                     </script>""".format(id=self.scrid) 
         output_html = scope_var + output_html
 
@@ -122,6 +123,10 @@ class RoundTrip():
         else:
             watch = 'false'
 
+
+        if jup_var not in self.shell.user_ns:
+            self.shell.user_ns[jup_var] = None
+        
         data = self.shell.user_ns[jup_var]
 
         self.bridges[self.last_id].pass_to_js(js_variable, 

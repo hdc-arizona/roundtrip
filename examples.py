@@ -6,6 +6,8 @@ import pandas as pd
 
 
 def _to_js(data):
+    if data is None:
+        return '{}'
     return data.to_json()
 
 def _from_js(data):

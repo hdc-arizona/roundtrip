@@ -1,7 +1,8 @@
 import { select, selectAll} from 'd3-selection';
-import { scaleLinear } from 'd3-scale';
+import { scaleLinear, scaleOrdinal } from 'd3-scale';
 import { axisLeft, axisBottom } from 'd3-axis';
 import { brush } from 'd3-brush';
+import { schemeTableau10 } from 'd3-scale-chromatic';
 
 import './scatter.css';
 
@@ -32,10 +33,20 @@ function update_subselection(selected){
     window.Roundtrip.subselection = JSON.stringify(subselect);
 }
 
+let continentMap = {
+    "AF": "Africa",
+    "AS": "Asia",
+    "EU": "Europe",
+    "NA": "North America",
+    "OC": "Oceania",
+    "OTH": "Unassigned",
+    "SA": "South America"
+}
+
 let RT = window.Roundtrip;
 let json = RT['scatter_src'];
 var data = JSON.parse(json);
-
+var present_continents = [... new Set(Object.values(data['Continent']))];
 
 let scaleDomain = {};
 let chartScale = {
@@ -43,7 +54,7 @@ let chartScale = {
     width: 1000,
     margins:{
         left: 50,
-        right: 50,
+        right: 200,
         top: 25,
         bottom: 25
     }
@@ -61,13 +72,14 @@ for(let key of Object.keys(data)){
 
 var pivot = []
 for(let i of Object.keys(data['Code'])){
-    let row = {id: i}
+    let row = {id: Number(i)}
     for(let key of Object.keys(data)){
         row[key] = data[key][i]
     }
 
     pivot.push(row);
 }
+
 
 /**
  * Initial Visualization Setup
@@ -83,6 +95,7 @@ var valid_data = [];
 let margins = chartScale.margins;
 let xscale = scaleLinear().range([margins.left, chartScale.width-margins.right]);
 let yscale = scaleLinear().range([margins.top, chartScale.height-margins.bottom]);
+let colorMap = scaleOrdinal().domain(Object.keys(continentMap)).range(schemeTableau10);
 
 
 let svg = select(element)
@@ -161,25 +174,46 @@ let brsh = brush()
     .extent([[0, 0], [chartScale.width, chartScale.height]])
     .on('start', function(){
         brushed = [];
+        render(svg);
+        update_subselection(brushed);
     })
     .on('brush', function(evt){
+    })
+    .on('end', function(evt){
         let area = evt.selection;
 
         valid_data.forEach((d)=>{
             let x = xscale(d[xselect]);
             let y = yscale(d[yselect]);
 
-            if(x > area[0][0] && x < area[1][0] &&
-                y > area[0][1] && y < area[1][1]){
-                    brushed.push(d.id);
-                }
-        })
+            if(!brushed.includes(d.id)){
+                if(x > area[0][0] && x < area[1][0] &&
+                    y > area[0][1] && y < area[1][1]){
+                        brushed.push(d.id);
+                    }
+            }
+        });
 
         render(svg);
-    })
-    .on('end', function(evt){
+
         update_subselection(brushed);
     });
+
+let legend = svg.append('g')
+                .attr('class', 'legend-grp');
+
+legend.append('rect')
+    .attr('width', 140)
+    .attr('height', 45+20*present_continents.length)
+    .attr('x', chartScale.width - chartScale.margins.right + 20)
+    .attr('fill', 'rgba(0,0,0,.1)');
+
+legend.append('text')
+        .text('Continent')
+        .attr('font-size', 18)
+        .attr('x', chartScale.width - chartScale.margins.right + 50)
+        .attr('y', 25);
+
 
 function render(svg){
 
@@ -213,10 +247,10 @@ function render(svg){
     dots.enter()
         .append('circle')
             .attr('class', 'dots')
-            .attr('r', 5)
+            .attr('r', 6)
             .attr('cx', (d)=>{return xscale(d[xselect])})
             .attr('cy', (d)=>{return yscale(d[yselect])})
-            .attr('fill', "rgba(50,50,120,1)")
+            .attr('fill', (d)=>{return colorMap(d['Continent'])})
             .on('click', function(evt, d){
                 if(!exclude.includes(d.id)){
                     exclude.push(d.id);
@@ -227,8 +261,16 @@ function render(svg){
             });
     
 
-    dots.attr('cx', (d)=>{return xscale(d[xselect])})
+    dots.transition()
+        .duration(500)
+        .attr('cx', (d)=>{return xscale(d[xselect])})
         .attr('cy', (d)=>{return yscale(d[yselect])})
+        .attr('r', (d) => {
+            if(exclude.includes(d.id)){
+                return 8;
+            }
+            return 6;
+        })
         .attr('class', (d) => {
             if(exclude.includes(d.id)){
                 return 'exclude dots';
@@ -242,7 +284,25 @@ function render(svg){
         });
 
     dots.exit()
+        .transition()
         .remove();
+
+    let lglines = legend.selectAll('.lline')
+            .data(present_continents);
+    
+    let line = lglines.enter()
+            .append('g')
+            .attr('transform', (d,i)=>{return `translate(${chartScale.width - chartScale.margins.right + 45}, ${(20*i) + 45})`;});
+
+    line.append('circle')
+        .attr('class', 'lline ref')
+        .attr('r', 6)
+        .attr('fill', (d)=>{ return colorMap(d); })
+    
+    line.append('text')
+        .attr('x', 10)
+        .attr('y', 5)
+        .text((d)=>{return continentMap[d];});
 
 }
 
