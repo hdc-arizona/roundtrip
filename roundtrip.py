@@ -150,6 +150,7 @@ class RoundTrip():
         update_hook = """\n (function(){{
                                 window.Roundtrip[\'{js_var}\'] = {{
                                     \'data\': \'{data}\',
+                                    \'python_var\': \'{var}\',
                                     \'origin\': \'PYASSIGN\'
                                 }};
                             }})();\n"""
@@ -173,7 +174,7 @@ class RoundTrip():
         for flag in update_flags:
             new_data = self.watched[flag]['converter'](self.shell.user_ns[flag])
             for var in self.watched[flag]['js_var']:
-                code += update_hook.format(js_var=var, data=new_data)
+                code += update_hook.format(js_var=var, data=new_data, var=flag)
         if code != '':
             display(Javascript(code))
           

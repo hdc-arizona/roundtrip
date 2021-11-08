@@ -29,6 +29,7 @@ function update_subselection(selected){
             subselect[key][sel] = data[key][sel];
         }
     }
+
     window.Roundtrip.selected = JSON.stringify(selected);
     window.Roundtrip.subselection = JSON.stringify(subselect);
 }
@@ -46,6 +47,7 @@ let continentMap = {
 let RT = window.Roundtrip;
 let json = RT['scatter_src'];
 var data = JSON.parse(json);
+
 var present_continents = [... new Set(Object.values(data['Continent']))];
 
 let scaleDomain = {};
@@ -123,6 +125,16 @@ ydropdown.selectAll('.y-options')
 ydropdown.on('change', ()=>{
     yselect = ydropdown
         .property('value');
+
+    if(brush_active){
+        svg.select('.brush-area').remove();
+        svg.append('g')
+            .attr('class', 'brush-area')
+            .call(brsh);
+    }
+
+    brushed = [];
+
     render(svg);
 })
 
@@ -146,6 +158,16 @@ xdropdown.selectAll('.x-options')
 xdropdown.on('change', ()=>{
     xselect = xdropdown
         .property('value');
+
+    if(brush_active){
+        svg.select('.brush-area').remove();
+        svg.append('g')
+            .attr('class', 'brush-area')
+            .call(brsh);
+    }
+
+    brushed = [];
+
     render(svg);
 })
 
@@ -255,8 +277,10 @@ function render(svg){
                 if(!exclude.includes(d.id)){
                     exclude.push(d.id);
                 }
+
                 let exjson = JSON.stringify(exclude);
-                window.Roundtrip.exclude = exjson;
+                RT.excluded_select = exjson;
+                
                 render(svg);
             });
     

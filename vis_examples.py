@@ -32,9 +32,9 @@ class Basic(Magics):
         print(args)
 
         #do arg mapping
-        RT.var_to_js(args[1], "test")
+        RT.var_to_js(args[1], "py_data")
 
-        RT.data_to_js(4, "test_2")
+        RT.data_to_js(4, "int_literal")
 
         RT.var_to_js(args[0], "js_df", watch=True,  to_js_converter=_to_js, from_js_converter=_from_js)
 
@@ -144,7 +144,7 @@ class Scatter(Magics):
     @line_magic
     def get_filter(self, line):
         args = line.split(' ')
-        RT.fetch_data("exclude", args[0])
+        RT.fetch_data("excluded_select", args[0])
 
 
 

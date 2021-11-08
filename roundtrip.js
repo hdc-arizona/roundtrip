@@ -106,8 +106,6 @@ var RT_Handler = {
 
                 }
 
-                    
-
                 else if(value.two_way === false && Object.keys(new_val.two_way).includes(value['python_var'])){
                     let pybinding = new_val.two_way[value['python_var']];
                     const index = pybinding.indexOf(value.id);
@@ -147,12 +145,14 @@ var RT_Handler = {
             //Subsequent assignments
             var execable_cells = [];
             let origin = 'STANDARD';
+            let python_var = '';
 
             if (typeof value === 'object' && 
                 value.hasOwnProperty('origin') && 
                 value.origin == 'PYASSIGN'){
-                
+
                 origin = value.origin;
+                python_var = value.python_var;
                 value = value.data;
             }
 
@@ -180,6 +180,10 @@ var RT_Handler = {
                     }
 
 
+                    if(origin == 'PYASSIGN'){
+                        py_var = python_var;
+                    }
+
                     /**
                      * We now have a list of registered cells we can execute.
                      * So we look through our javascript variables to see if they
@@ -202,7 +206,9 @@ var RT_Handler = {
                     
                     //TODO: Turn this into a function that manages error reporting and printing
                     Jupyter.notebook.kernel.execute(code, { shell:{
-                                                            reply: function(r){console.log("Response from shell- USE FOR ERROT REPORTING!", r)}
+                                                            reply: function(r){
+                                                                //console.log("Response from shell- USE FOR ERROR REPORTING!", r)
+                                                            }
                                                         }
                                                     });
 
