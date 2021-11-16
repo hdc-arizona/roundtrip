@@ -2,19 +2,18 @@ import * as d3 from 'd3';
 import './table.css';
 
 let json = window.Roundtrip['table_src']
-// console.log(json);
 let data = JSON.parse(json)
 
-// console.log(data);
-
 var pivot = []
-for(let i of Object.keys(data['Code'])){
-    let row = {}
-    for(let key of Object.keys(data)){
-        row[key] = data[key][i]
-    }
+if(Object.keys(data).includes('Code')){
+    for(let i of Object.keys(data['Code'])){
+        let row = {}
+        for(let key of Object.keys(data)){
+            row[key] = data[key][i]
+        }
 
-    pivot.push(row);
+        pivot.push(row);
+    }
 }
 
 let table = d3.select(element)

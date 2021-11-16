@@ -7,12 +7,18 @@ module.exports = {
             {
                 test: /\.css$/i,
                 use: ["style-loader", "css-loader"]
+            },
+            {
+                test: /\.(js|jsx)$/,
+                exclude: /node_modules/,
+                use: ['babel-loader']
             }
         ]
     },
     entry: {
         table: ['./Examples/source/Table/table.js'],
-        scatter: ['./Examples/source/Scatter/scatter.js']
+        scatter: ['./Examples/source/Scatter/scatter.js'],
+        histogram: ['./Examples/source/Histogram/histogram.js']
     },
     output: {
         publicPath: 'Examples/dist/',
@@ -32,6 +38,12 @@ module.exports = {
             template: './Examples/source/Scatter/scatter.html',
             chunks: ['scatter'],
             filename: 'scatter_bundle.html'
-        })],
+        }),
+        new HtmlWebpackPlugin({
+            template: './Examples/source/Histogram/histogram.html',
+            chunks: ['histogram'],
+            filename: 'histogram_bundle.html'
+        })
+    ],
     mode: 'production'
 }

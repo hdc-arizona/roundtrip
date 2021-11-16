@@ -1,5 +1,5 @@
 from IPython.core.magic import Magics, magics_class, line_magic
-from roundtrip import Roundtrip as RT
+from Src.roundtrip import Roundtrip as RT
 import json
 import pandas as pd
 
@@ -29,8 +29,6 @@ class Basic(Magics):
         #load files
         RT.load_web_files(["Examples/source/Basic/basic.js", "Examples/source/Basic/basic.html"])
 
-        print(args)
-
         #do arg mapping
         RT.var_to_js(args[1], "py_data")
 
@@ -49,42 +47,10 @@ class Basic(Magics):
 
 
 @magics_class
-class BindingExample(Magics):
+class BarChart(Magics):
 
     def __init__(self, shell):
-        super(BindingExample, self).__init__(shell)
-        
-    @line_magic
-    def binding_example(self, line):
-        args = line.split(' ')
-
-        #load files
-        RT.load_web_files(["Examples/source/BindingExample/binding.js", "Examples/source/BindingExample/binding.html"])
-        
-        #load variables
-        RT.var_to_js(args[0], "binding_df", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
-
-        #initialize roundtrip
-        RT.initialize()
-
-
-# @magics_class
-# class WebpackExample(Magics):
-
-#     def __init__(self, shell):
-#         super(WebpackExample, self).__init__(shell)
-    
-#     @line_magic
-#     def webpack_example(self, line):
-#         RT.load_web_files(["Examples/dist/index.html"])
-#         RT.initialize()
-
-
-@magics_class
-class BarGraph(Magics):
-
-    def __init__(self, shell):
-        super(BarGraph, self).__init__(shell)
+        super(BarChart, self).__init__(shell)
     
     @line_magic
     def bargraph(self, line):
@@ -138,19 +104,34 @@ class Scatter(Magics):
 
         if len(args) > 1:
             RT.var_to_js(args[1], "subselection", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
-    
+
         RT.initialize()
     
     @line_magic
     def get_filter(self, line):
         args = line.split(' ')
-        RT.fetch_data("excluded_select", args[0])
+        RT.fetch_data("selected", args[0])
+
+@magics_class
+class Histogram(Magics):
+    def __init__(self, shell):
+        super(Histogram, self).__init__(shell)
+    
+    @line_magic
+    def histogram(self, line):
+        args = line.split(' ')
+
+        RT.load_webpack('Examples/dist/histogram_bundle.html')
+
+        RT.var_to_js(args[0], "hist_data", watch=True, to_js_converter=_to_js, from_js_converter=_from_js)
+
+        RT.initialize()
 
 
 
 def load_ipython_extension(ipython):
     ipython.register_magics(Basic)
-    ipython.register_magics(BindingExample)
-    ipython.register_magics(BarGraph)
+    ipython.register_magics(BarChart)
     ipython.register_magics(Table)
     ipython.register_magics(Scatter)
+    ipython.register_magics(Histogram)

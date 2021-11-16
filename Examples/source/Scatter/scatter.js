@@ -88,7 +88,7 @@ for(let i of Object.keys(data['Code'])){
  */
 
 var options = Object.keys(scaleDomain);
-var yselect = 'Electricity from coal (TWh)';
+var yselect = 'Electricity from oil (TWh)';
 var xselect = 'Electricity from gas (TWh)';
 let exclude = [];
 var brush_active = false;
@@ -208,7 +208,7 @@ let brsh = brush()
             let x = xscale(d[xselect]);
             let y = yscale(d[yselect]);
 
-            if(!brushed.includes(d.id)){
+            if(!brushed.includes(d.id) && area != null){
                 if(x > area[0][0] && x < area[1][0] &&
                     y > area[0][1] && y < area[1][1]){
                         brushed.push(d.id);
