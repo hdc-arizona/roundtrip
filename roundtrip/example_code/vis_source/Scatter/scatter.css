@@ -1,0 +1,9 @@
+.exclude{
+    stroke: black;
+    stroke-width: 3px;
+}
+
+.selected-pt{
+    stroke:black;
+    stroke-width: 3px;
+}
