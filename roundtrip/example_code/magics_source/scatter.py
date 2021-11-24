@@ -18,47 +18,44 @@ def _from_js(data):
     return pd.DataFrame(data)
 
 
+
 @magics_class
-class Basic(Magics):
+class Scatter(Magics):
     def __init__(self, shell):
-        super(Basic, self).__init__(shell)
-        self.shell = shell
-        self.basic_path = path.join(vis_path, 'Basic')
+        super(Scatter, self).__init__(shell)
+        self.webpack_dist = path.join(vis_path, 'dist')
 
     @line_magic
-    def basic(self, line):
+    def scatter_plt(self, line):
         args = line.split(" ")
-        
 
-        # load files
-        RT.load_web_files(
-            [path.join(self.basic_path,"basic.js"), path.join(self.basic_path,"basic.html")]
-        )
-
-        # do arg mapping
-        RT.var_to_js(args[1], "py_data")
-
-        RT.data_to_js(4, "int_literal")
+        RT.load_webpack(path.join(self.webpack_dist, "scatter_bundle.html"))
 
         RT.var_to_js(
             args[0],
-            "js_df",
+            "scatter_src",
             watch=True,
             to_js_converter=_to_js,
             from_js_converter=_from_js,
         )
 
+        if len(args) > 1:
+            RT.var_to_js(
+                args[1],
+                "subselection",
+                watch=True,
+                to_js_converter=_to_js,
+                from_js_converter=_from_js,
+            )
+
         RT.initialize()
 
-        pass
-
     @line_magic
-    def fetch_basic(self, line):
+    def get_filter(self, line):
         args = line.split(" ")
-        RT.fetch_data("test", args[0])
-
+        RT.fetch_data("selected", args[0])
 
 
 
 def load_ipython_extension(ipython):
-    ipython.register_magics(Basic)
+    ipython.register_magics(Scatter)

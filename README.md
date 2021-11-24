@@ -3,25 +3,30 @@
 An library for loading Javascript into Jupyter
 Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.
 
-- [Getting Started](#Getting-Started)
-- [Using Roundtrip in Your Notebook](#Using-Roundtrip-in-your-Notebook)
+- [Getting Started](#Try-It-Out)
+- [Using Roundtrip in Your Notebook](#Quickstart)
 - [Loading Visualizations](#Loading-Visualizations)
 - [Fetching Data from Visualizations](#Fetching-Data)
 
 
 
 ### Try It Out
-1) Install [Jupyter notebook](https://jupyter.org/install)
+1) Install [Jupyter notebook](https://jupyter.org/install) & [Node](https://nodejs.org/en/download/)
 2) Clone this repository:
 ```bash
 git clone https://github.com/hdc-arizona/roundtrip.git
 ```
-3) Start a jupyter server from the `roundtrip` base directory:
+3) Run the automatic installer:
 ```bash
-cd path/to/roundtrip
+cd roundtrip
+chmod +x install.sh
+./install.sh
+```
+4) Start a jupyter server from the `roundtrip` base directory:
+```bash
 jupyter notebook 
 ```
-4) From your web browser navigate to the `docs/examples/` folder and open the `Manual Workflow Example` notebook.
+5) From your web browser navigate to the `docs/examples/` folder and open the `Manual Workflow Example` notebook.
 
 On load, you may need to clean the output by running `Restart & Clear Output`
 from the `Kernel` menu in Jupyter.
@@ -34,20 +39,110 @@ Running the cells in the first example will demonstrate:
 
 Once you understand the functionality in this notebook please open the `Advanced Workflow Example`
 
-Running the cessl in this example will demonstrate:
-1. The `?` operator and how it can be 
+Running the cells in this example will demonstrate:
+1. The `?` operator and how it links python data with visualization data
+2. How the `?` can provide linked-view functionality between cells
+3. How the linking of data and automatic updating of cells can be easily turned off by removing the `?`
+4. How cells update when data is update inside the jupyter notebook as well as in the visualizations
 
 
-
-### Using Roundtrip in your Notebook
+### Quickstart
  
-To use with your own notebook:
+If you have already [tried out](#Try-It-Out) roundtrip and are intrested in making your own magic-function exposed visualizations the following guide will help you get started.
 
-1) Copy `vis_interface.py` and `require.config` into the same directory as your notebook.
-2) Add a new cell and run the magic command `%load_ext vis_interface`
-3) Use the magic commands `%loadVisualization` and `%fetchData` to use this interface (for loading Javascript files and fetching data from Javascript into python)
+1) Install Roundtrip:
+```bash
+pip install roundtrip 
+```
+2) Create a directory to host your visualization files:
+```bash
+mkdir rt_tutorial
+cd rt_tutorial
+```
+3) Inside of this directory create:
+  1) A python file which will host the visualization's magic functions
+  2) An html file which will be used as a template or stub for our javascript code to manipulate
+```bash
+touch rt_templ.html rt_vis.py
+```
 
-The `%loadVisualization` and `%fetchData` commands are described below.
+4) We will begin by modifying `rt_templ.html`. Using your text editor of choice, insert the following html code into our template.
+```html
+<body>
+  <h1>I was loaded by Roundtrip.</h1>
+</body>
+```
+
+5) Now open `rt_vis.py` in your favorite text editor.
+
+Inside of `rt_vis.py` we are going to import the following lines of code
+
+```python
+from IPython.core.magic import Magics, magics_class, line_magic
+from roundtrip.manager import Roundtrip as RT
+```
+
+Since we will be creating a standard Jupyter magics class for our users to use for accessing the visualization we must import some of those libraries. 
+
+On the second line we import a singelton Roundtrip instance and giving it the RT alias.
+
+Next, we will define our magics class:
+
+```python
+@magics_class
+class MyRTVis(Magics):
+  def __init__(self, shell):
+    super(Basic, self).__init__(shell)
+    self.shell = shell
+```
+
+This is standard boilerplate for defining a magics class and is explained in more detail in the Jupyter documentation.
+
+In order to expose a magic function to our users we need to add a new member function with a line magic decorator.
+
+```python
+@magics_class
+class MyRTVis(Magics):
+  def __init__(self, shell):
+    super(Basic, self).__init__(shell)
+    self.shell = shell
+
+  @line_magic
+  def hello_rt(self, line):
+      
+      # load files
+      RT.load_web_files(["basic.html"])
+
+      RT.initialize()
+  
+def load_ipython_extension(ipython):
+    ipython.register_magics(MyRTVis)  
+```
+
+In this new line magic function we provide an single line magic function call `%hello_rt` which will load our html in the calling notebook, using `RT.load_web_files()`. `RT.initalize()` will always be called after we load files and specify data bindings between our visualization and python code.
+
+At the bottom, you will see the function `load_python_extension`, this is a Jupyter specific function which allows us to load our magics class using the `%load_ext` command in our notebook.
+
+To see it in action we need to make a jupyter notebook.
+
+6) Create a Jupyter notebook in this same directory
+
+To create a jupyter server run:
+```bash
+jupyter-notebook
+```
+
+This should open your web browser automatically with a file-explorer view. From this view, create a new notebook. Inside of the notebook, in the first cell add the line:
+```python
+%load_ext rt_vis
+```
+
+Then, create a new cell and add a call to our magic function:
+```python
+%hello_rt
+```
+
+7) Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip in he `%hello_rt` cell.
 
 
 

@@ -125,6 +125,8 @@ class RoundTrip:
             html = BeautifulSoup(output_html, 'html.parser')
             scripts = []
             for tag in html.select('script'):
+                # TODO: Add option for server based loading with this
+                # So JS can be dynamically loaded
                 # tag['src'] = os.path.relpath(tag['src'], self.shell.user_ns['_dh'][0])
                 t = tag.extract()
                 with open(t['src']) as f:
@@ -137,7 +139,6 @@ class RoundTrip:
             self.relative_html_caches[file] = {'html': output_html}
         else:
             output_html = self.relative_html_caches[file]['html']
-            print("TOOK FAST PATH")
         
 
         # This line is needed to expose the current `element` to the webpack bundled scripts as though

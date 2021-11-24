@@ -11,14 +11,17 @@ module.exports = {
             {
                 test: /\.(js|jsx)$/,
                 exclude: /node_modules/,
-                use: ['babel-loader']
+                loader: 'babel-loader',
+                options:{
+                    cwd: path.resolve(__dirname)
+                }
             }
         ]
     },
     entry: {
-        table: ['./vis_source/Table/table.js'],
-        scatter: ['./vis_source/Scatter/scatter.js'],
-        histogram: ['./vis_source/Histogram/histogram.js']
+        table: [path.resolve(__dirname,'vis_source/Table/table.js')],
+        scatter: [path.resolve(__dirname,'vis_source/Scatter/scatter.js')],
+        histogram: [path.resolve(__dirname,'vis_source/Histogram/histogram.js')]
     },
     output: {
         publicPath: path.resolve(__dirname, 'vis_source/dist'),
@@ -30,17 +33,17 @@ module.exports = {
     },
     plugins:[
         new HtmlWebpackPlugin({
-            template: './vis_source/Table/table.html',
+            template: path.resolve(__dirname, 'vis_source/Table/table.html'),
             chunks: ['table'],
             filename: 'table_bundle.html'
         }),
         new HtmlWebpackPlugin({
-            template: './vis_source/Scatter/scatter.html',
+            template: path.resolve(__dirname, 'vis_source/Scatter/scatter.html'),
             chunks: ['scatter'],
             filename: 'scatter_bundle.html'
         }),
         new HtmlWebpackPlugin({
-            template: './vis_source/Histogram/histogram.html',
+            template: path.resolve(__dirname,'vis_source/Histogram/histogram.html'),
             chunks: ['histogram'],
             filename: 'histogram_bundle.html'
         })
