@@ -1,6 +1,6 @@
 ## Roundtrip
 
-An interface for loading Javascript (notably D3 visualizations) into Jupyter
+An library for loading Javascript into Jupyter
 Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.
 
 - [Getting Started](#Getting-Started)
@@ -10,25 +10,32 @@ Notebooks. Supports transferring data from Python Jupyter cells to Javascript—
 
 
 
-### Getting Started
+### Try It Out
 1) Install [Jupyter notebook](https://jupyter.org/install)
 2) Clone this repository:
 ```bash
 git clone https://github.com/hdc-arizona/roundtrip.git
 ```
-3) Start the example jupyter notebook:
+3) Start a jupyter server from the `roundtrip` base directory:
 ```bash
-jupyter-notebook roundtrip/Examples/ExampleNotebook.ipynb
+cd path/to/roundtrip
+jupyter notebook 
 ```
+4) From your web browser navigate to the `docs/examples/` folder and open the `Manual Workflow Example` notebook.
 
 On load, you may need to clean the output by running `Restart & Clear Output`
 from the `Kernel` menu in Jupyter.
 
-Running the cells in the example will demonstrate:
+Running the cells in the first example will demonstrate:
 
-1. Loading Roundtrip
-2. Loading a sample visualization
-3. Fetching data out of visualizations
+1. The loading of a real pandas dataset into a javascript visualization
+2. Interaction with the visualization
+3. Returning data back from the visualization to the Jupyter notebook
+
+Once you understand the functionality in this notebook please open the `Advanced Workflow Example`
+
+Running the cessl in this example will demonstrate:
+1. The `?` operator and how it can be 
 
 
 

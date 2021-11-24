@@ -26,7 +26,7 @@ function unindentPyCode(code){
 
 /**
  * @name buildPythonAssignment
- * @description Builds up a python code string which assigns javascript data back into jypyter notebook
+ * @description Builds up a python code string which assigns javascript data back into jypyter notebook namespace
  * 
  * @param {string} val This is data assigned back to the python code
  * @param {string} py_var This is the variable into which val is assigned
