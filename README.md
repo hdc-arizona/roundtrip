@@ -137,7 +137,7 @@ Create a Jupyter notebook in this same directory
   jupyter-notebook
   ```
 
-  This should open your web browser automatically with a file-explorer view. From this view, create a new notebook. Inside of the notebook, in the first cell add the line:
+  This should open your web browser automatically with a file-explorer view. From this view, create a new notebook. Name the notebook 'rt_notebook'. Inside of the notebook, in the first cell add the line:
   ```python
   %load_ext rt_vis
   ```
@@ -147,11 +147,42 @@ Create a Jupyter notebook in this same directory
   %hello_rt
 ```
 
-Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip in he `%hello_rt` cell.
+Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip." in the `%hello_rt` cell!
+
+## Advanced Usage
+Assuming you have gone through the quick-start tutorial; you should now be ready to learn more about the advanced and dynamic features of Roundtrip.
+
+### Loading Multiple Files
+In the quick start, we load a single, static HTML file. While helpful to verify that your install is working, it cannot support even a simple visualization so we will now explore how you can load multiple files and modify your html.
+
+Picking up from the Quickstart, you should now have a directory that looks like this:
+
+```
+rt_tutorial
+├── rt_templ.html
+├── rt_vis.py
+├── rt_notebook.ipynb
+```
+
+We are going to expand on this directory by adding a new file, `rt_script.js`.
+```bash
+touch rt_script.js
+```
+Inside of this file we will write a simple script which adds a line to our html:
+
+```javascript
+
+```
 
 
 
-### Loading Visualizations
+### Loading Webpack
+
+### Passing Local Python Data to Javascript
+
+### Passing Jupyter-Scoped Variables to Javascript
+
+### Binding Jupyter-Scoped Variables to Javascript with the '?' operator
 
 The command for loading visualizations (or any HTML or Javascript file) is
 `%loadVisualization`. It requires at least two arguments, a `nameID` for the
