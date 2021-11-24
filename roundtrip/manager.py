@@ -118,17 +118,26 @@ class RoundTrip:
             See the example_webpack.config.js provided in the roundtrip directory.
         """
         output_html = ""
-        output_html += self._file_formatter(file)
 
-        #make tag paths relative
+        #use generic javascript loading for these now
         if (file not in self.relative_html_caches):
+            output_html += self._file_formatter(file)
             html = BeautifulSoup(output_html, 'html.parser')
+            scripts = []
             for tag in html.select('script'):
-                tag['src'] = os.path.relpath(tag['src'], self.shell.user_ns['_dh'][0])
+                # tag['src'] = os.path.relpath(tag['src'], self.shell.user_ns['_dh'][0])
+                t = tag.extract()
+                with open(t['src']) as f:
+                    src = f.read()
+                    scrpt = html.new_tag('script')
+                    scrpt.string = src
+                    html.select('head')[0].append(scrpt)
+
             output_html = str(html)
-            self.relative_html_caches[file] = output_html
+            self.relative_html_caches[file] = {'html': output_html}
         else:
-            output_html = self.relative_html_caches[file]
+            output_html = self.relative_html_caches[file]['html']
+            print("TOOK FAST PATH")
         
 
         # This line is needed to expose the current `element` to the webpack bundled scripts as though
