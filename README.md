@@ -50,30 +50,34 @@ Running the cells in this example will demonstrate:
  
 If you have already [tried out](#Try-It-Out) roundtrip and are intrested in making your own magic-function exposed visualizations the following guide will help you get started.
 
-1) Install Roundtrip:
+#### Setup
+Install Roundtrip:
 ```bash
 pip install roundtrip 
 ```
-2) Create a directory to host your visualization files:
+
+Create a directory to host your visualization files:
 ```bash
 mkdir rt_tutorial
 cd rt_tutorial
 ```
-3) Inside of this directory create:
+
+Inside of this directory create:
   1) A python file which will host the visualization's magic functions
   2) An html file which will be used as a template or stub for our javascript code to manipulate
 ```bash
 touch rt_templ.html rt_vis.py
 ```
-
-4) We will begin by modifying `rt_templ.html`. Using your text editor of choice, insert the following html code into our template.
+#### HTML
+We will begin by modifying `rt_templ.html`. Using your text editor of choice, insert the following html code into our template.
 ```html
 <body>
   <h1>I was loaded by Roundtrip.</h1>
 </body>
 ```
 
-5) Now open `rt_vis.py` in your favorite text editor.
+#### Making a visualization loader
+Now open `rt_vis.py` in your favorite text editor.
 
   Inside of `rt_vis.py` we are going to import the following lines of code
 
@@ -125,7 +129,8 @@ touch rt_templ.html rt_vis.py
 
   To see it in action we need to make a jupyter notebook.
 
-6) Create a Jupyter notebook in this same directory
+#### Using our Vis in a Jupyter Notebook
+Create a Jupyter notebook in this same directory
 
   To create a jupyter server run:
   ```bash
@@ -142,7 +147,7 @@ touch rt_templ.html rt_vis.py
   %hello_rt
 ```
 
-7) Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip in he `%hello_rt` cell.
+Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip in he `%hello_rt` cell.
 
 
 
