@@ -75,71 +75,71 @@ touch rt_templ.html rt_vis.py
 
 5) Now open `rt_vis.py` in your favorite text editor.
 
-Inside of `rt_vis.py` we are going to import the following lines of code
+  Inside of `rt_vis.py` we are going to import the following lines of code
 
-```python
-from IPython.core.magic import Magics, magics_class, line_magic
-from roundtrip.manager import Roundtrip as RT
-```
+  ```python
+  from IPython.core.magic import Magics, magics_class, line_magic
+  from roundtrip.manager import Roundtrip as RT
+  ```
 
-Since we will be creating a standard Jupyter magics class for our users to use for accessing the visualization we must import some of those libraries. 
+  Since we will be creating a standard Jupyter magics class for our users to use for accessing the visualization we must import some of those libraries. 
 
-On the second line we import a singelton Roundtrip instance and giving it the RT alias.
+  On the second line we import a singelton Roundtrip instance and giving it the RT alias.
 
-Next, we will define our magics class:
+  Next, we will define our magics class:
 
-```python
-@magics_class
-class MyRTVis(Magics):
-  def __init__(self, shell):
-    super(Basic, self).__init__(shell)
-    self.shell = shell
-```
+  ```python
+  @magics_class
+  class MyRTVis(Magics):
+    def __init__(self, shell):
+      super(Basic, self).__init__(shell)
+      self.shell = shell
+  ```
 
-This is standard boilerplate for defining a magics class and is explained in more detail in the Jupyter documentation.
+  This is standard boilerplate for defining a magics class and is explained in more detail in the Jupyter documentation.
 
-In order to expose a magic function to our users we need to add a new member function with a line magic decorator.
+  In order to expose a magic function to our users we need to add a new member function with a line magic decorator.
 
-```python
-@magics_class
-class MyRTVis(Magics):
-  def __init__(self, shell):
-    super(Basic, self).__init__(shell)
-    self.shell = shell
+  ```python
+  @magics_class
+  class MyRTVis(Magics):
+    def __init__(self, shell):
+      super(Basic, self).__init__(shell)
+      self.shell = shell
 
-  @line_magic
-  def hello_rt(self, line):
-      
-      # load files
-      RT.load_web_files(["basic.html"])
+    @line_magic
+    def hello_rt(self, line):
+        
+        # load files
+        RT.load_web_files(["basic.html"])
 
-      RT.initialize()
-  
-def load_ipython_extension(ipython):
-    ipython.register_magics(MyRTVis)  
-```
+        RT.initialize()
+    
+  def load_ipython_extension(ipython):
+      ipython.register_magics(MyRTVis)  
+  ```
 
-In this new line magic function we provide an single line magic function call `%hello_rt` which will load our html in the calling notebook, using `RT.load_web_files()`. `RT.initalize()` will always be called after we load files and specify data bindings between our visualization and python code.
+  In this new line magic function we provide an single line magic function call `%hello_rt` which will load our html in the calling notebook, using `RT.load_web_files()`. `RT.initalize()` will always be called after we load files and specify data bindings between our visualization and python code.
 
-At the bottom, you will see the function `load_python_extension`, this is a Jupyter specific function which allows us to load our magics class using the `%load_ext` command in our notebook.
+  At the bottom, you will see the function `load_python_extension`, this is a Jupyter specific function which allows us to load our magics class using the `%load_ext` command in our notebook.
 
-To see it in action we need to make a jupyter notebook.
+  To see it in action we need to make a jupyter notebook.
 
 6) Create a Jupyter notebook in this same directory
 
-To create a jupyter server run:
-```bash
-jupyter-notebook
-```
+  To create a jupyter server run:
+  ```bash
+  jupyter-notebook
+  ```
 
-This should open your web browser automatically with a file-explorer view. From this view, create a new notebook. Inside of the notebook, in the first cell add the line:
-```python
-%load_ext rt_vis
-```
+  This should open your web browser automatically with a file-explorer view. From this view, create a new notebook. Inside of the notebook, in the first cell add the line:
+  ```python
+  %load_ext rt_vis
+  ```
 
-Then, create a new cell and add a call to our magic function:
-```python
-%hello_rt
+  Then, create a new cell and add a call to our magic function:
+  ```python
+  %hello_rt
 ```
 
 7) Now, with everything setup run the cells in this notebook. You should see the text: "I was loaded by roundtrip in he `%hello_rt` cell.
