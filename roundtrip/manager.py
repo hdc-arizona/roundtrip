@@ -70,7 +70,7 @@ class RoundTrip:
         self.shell = ipy_shell
         self.tags = {
             "script": "<script src='{src}'></script>",
-            "style": "<link rel='stylesheet' href='{}'>",
+            "style": "<link rel='stylesheet' href='{src}'>",
         }
         self.line = "{tags}\n"
         self.bridges = {}
@@ -175,6 +175,18 @@ class RoundTrip:
         # this initial string is where variable bindings go
         scripts = [""]
 
+        scope_tag = """
+                    <div id="locator-{id}">
+                    </div>
+            """.format(
+            id=self.scrid
+        )
+
+        locator_script = 'var element = document.getElementById("locator-{id}").parentNode;'.format(id=self.scrid)
+
+        output_html += scope_tag
+        scripts.append(locator_script)
+
         # load files based on their individual properties
         for file in files:
             ft = self._get_file_type(file)
@@ -182,6 +194,9 @@ class RoundTrip:
                 scripts.append(open(file).read())
             else:
                 output_html += self._file_formatter(file)
+
+
+
 
         bdg = Bridge(output_html, scripts, self.shell)
 
