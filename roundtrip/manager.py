@@ -108,7 +108,7 @@ class RoundTrip:
         elif ft == "html":
             return open(file).read()
 
-    def load_webpack(self, file):
+    def load_webpack(self, file, cache=True):
         """
         The primary interface for loading visualizations.
 
@@ -120,7 +120,7 @@ class RoundTrip:
         output_html = ""
 
         #use generic javascript loading for these now
-        if (file not in self.relative_html_caches):
+        if (cache is False or file not in self.relative_html_caches):
             output_html += self._file_formatter(file)
             html = BeautifulSoup(output_html, 'html.parser')
             scripts = []
@@ -344,6 +344,16 @@ class RoundTrip:
                             }})();\n"""
         code = ""
 
+
+        # TODO: FIX BUG WHICH MAKES THIS CODE BLOCK READ AS AN ASSIGNMENT
+        '''
+        subselection = []
+        rng = ranges
+        for r in rng:
+            subselection += rng[r]
+            
+        subselection = np.array(subselection)
+        '''
         for var in self.watched.keys():
             for i, token in enumerate(tokens):
                 if token.string == var:

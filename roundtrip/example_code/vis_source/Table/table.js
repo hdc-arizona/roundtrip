@@ -9,7 +9,7 @@ if(Object.keys(data).includes('Code')){
     for(let i of Object.keys(data['Code'])){
         let row = {}
         for(let key of Object.keys(data)){
-            row[key] = data[key][i]
+            row[key] = data[key][i];
         }
 
         pivot.push(row);
