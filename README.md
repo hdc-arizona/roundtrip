@@ -43,7 +43,6 @@ Running the cells in this example will demonstrate:
 4. How cells update when data is update inside the jupyter notebook as well as in the visualizations
 
 
-
 ### License
 
 Roundtrip is distributed under the terms of the MIT license.

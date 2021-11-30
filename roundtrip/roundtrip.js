@@ -61,12 +61,10 @@ function manageNewCell(newCells, obj){
         }
     });
 
-    console.log(cached_cells, newCells);
     //increment all bindings past each new id
     for(let js_var in obj){
         for(let id of newIds){
             for(let key in obj[js_var]["two_way"]){
-                console.log("MANAGE NEW CELL: ", js_var, key, obj[js_var]["two_way"][key], id);
                 obj[js_var]["two_way"][key].forEach((two_way_id, i) => {
                     if(two_way_id > id){
                         obj[js_var]["two_way"][key][i] += 1;
@@ -88,9 +86,6 @@ function manageDeletedCell(newCells, obj){
             break;
         }
     }
-
-
-    console.log(deletedId);
 
 }
 
@@ -271,21 +266,22 @@ var RT_Handler = {
                         }
                     }
 
-
-                    // TODO:THROW AN ERROR IF CONVERTER == NONE
-                    const code = buildPythonAssignment(value, py_var, obj[prop]["converter"]);
-                    
-                    //TODO: Turn this into a function that manages error reporting and printing
-                    Jupyter.notebook.kernel.execute(code, { 
-                                                        shell:{
-                                                            reply: function(r){
-                                                                //consider putting this in a reserved jupyter variable
-                                                                if(r.content.status == 'error'){
-                                                                    console.error(`${r.content.ename} in JS->Python coversion:\n ${r.content.evalue}`)
+                    if(origin == 'STANDARD'){
+                        // TODO:THROW AN ERROR IF CONVERTER == NONE
+                        const code = buildPythonAssignment(value, py_var, obj[prop]["converter"]);
+                        
+                        //TODO: Turn this into a function that manages error reporting and printing
+                        Jupyter.notebook.kernel.execute(code, { 
+                                                            shell:{
+                                                                reply: function(r){
+                                                                    //consider putting this in a reserved jupyter variable
+                                                                    if(r.content.status == 'error'){
+                                                                        console.error(`${r.content.ename} in JS->Python coversion:\n ${r.content.evalue}`)
+                                                                    }
                                                                 }
                                                             }
-                                                        }
-                                                    });
+                                                        });
+                    }
 
                     refresh_cycle = true;
                     Jupyter.notebook.execute_cells(execable_cells);

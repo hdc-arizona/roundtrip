@@ -293,6 +293,7 @@ class RoundTrip:
         if jup_var not in self.shell.user_ns:
             self.shell.user_ns[jup_var] = None
 
+
         data = self.shell.user_ns[jup_var]
 
         self.bridges[self.last_id].pass_to_js(
@@ -360,7 +361,7 @@ class RoundTrip:
                     lookahead = i
                     while (
                         lookahead < len(tokens)
-                        and tokenize.tok_name[tokens[lookahead].type] != "NL"
+                        and tokenize.tok_name[tokens[lookahead].type] != "NEWLINE"
                     ):
                         if tokens[lookahead].string in assignment_tokens:
                             update_flags[var] = True
@@ -377,6 +378,7 @@ class RoundTrip:
                 code += update_hook.format(js_var=var, data=new_data, var=flag)
         if code != "":
             display(Javascript(code))
+        
 
     def fetch_data(self, js_var, ipy_var):
         """
