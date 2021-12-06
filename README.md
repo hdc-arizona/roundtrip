@@ -1,13 +1,13 @@
 ## Roundtrip
 
-An library for loading and managing Javascript code and visualization in Jupyter notebook cells.
+A python/javascript library for loading and managing Javascript code and visualization in Jupyter notebook cells.
 
-This lubrary supports:
+This library supports:
 - Loading HTML, CSS, and JavaScript Files
-- Loading Webpack Generated Files
+- Loading Webpack-Generated Files
 - Passing Jupyter-scoped data into Javascript code
 - Returnng Javascript generated data back to the calling Jupyter Notebook
-- Binding data between Jupyter-notebook and Javascript visualizations
+- Binding data between a Jupyter notebook and embedded Javascript visualizations
 - Automatic updating of bound visualizations enabling:
   - fluid gui-scripting based workflows
   - linked views across cells
@@ -25,8 +25,9 @@ git clone https://github.com/hdc-arizona/roundtrip.git
 3) Run the automatic installer:
 ```bash
 cd roundtrip
-chmod +x install.sh
-./install.sh
+pip3 install roundtrip-lib
+chmod +x buuild_examples.sh
+./build_examples.sh
 ```
 4) Start a jupyter server from the `roundtrip` base directory:
 ```bash
