@@ -2,3 +2,5 @@
 *.sw*
 __pycache__
 *.ipynb_checkpoints
+roundtrip/example_code/vis_source/dist/*
+*_bundle.*

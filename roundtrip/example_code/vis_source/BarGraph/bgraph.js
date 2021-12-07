@@ -1,5 +1,5 @@
 (function(element) {
-    require(['d3'], function(d3) {
+    require(['https://d3js.org/d3.v5.min.js'], function(d3) {
 var margin = {top: 30, right: 120, bottom: 0, left: 120},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
@@ -43,7 +43,8 @@ svg.append("g")
   .append("line")
     .attr("y1", "100%");
 
-d3.json(argList[1]).then(function(root) {
+d3.json(Roundtrip.data).then(function(root) {
+    console.log(root);
   root = d3.hierarchy(root)
                 .sum(d => d.size)
                 .sort((a,b) => b.value - a.value);
@@ -55,7 +56,8 @@ d3.json(argList[1]).then(function(root) {
 });
 
 function down(d, i) {
-  if (!d.children || this.__transition__) return;
+//   if (!d.children || this.__transition__) return;
+  if (!d.children ) return;
   var end = duration + d.children.length * delay;
 
   // Mark any currently-displayed bars as exiting.
@@ -120,7 +122,7 @@ function down(d, i) {
 }
 
 function up(d) {
-  if (!d.parent || this.__transition__) return;
+    if (!d.parent ) return;
   var end = duration + d.children.length * delay;
 
   // Mark any currently-displayed bars as exiting.
@@ -222,4 +224,4 @@ function stack(i) {
 
 
 })
-})(element);
+})(element[0]);
