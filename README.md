@@ -26,7 +26,7 @@ git clone https://github.com/hdc-arizona/roundtrip.git
 ```bash
 cd roundtrip
 pip3 install roundtrip-lib
-chmod +x buuild_examples.sh
+chmod +x build_examples.sh
 ./build_examples.sh
 ```
 4) Start a jupyter server from the `roundtrip` base directory:
