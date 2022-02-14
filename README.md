@@ -17,7 +17,7 @@ This library supports:
 
 
 ### Try It Out
-1) Install [Jupyter notebook](https://jupyter.org/install) & [Node.js](https://nodejs.org/en/download/)
+1) Install [Jupyter notebook](https://jupyter.org/install), [Node.js](https://nodejs.org/en/download/) & [NPM](https://www.npmjs.com/package/npm) 
 2) Clone this repository:
 ```bash
 git clone https://github.com/hdc-arizona/roundtrip.git
