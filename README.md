@@ -65,3 +65,8 @@ See [LICENSE](https://github.com/hdc-arizona/roundtrip/blob/master/LICENSE) and
 [NOTICE](https://github.com/hdc-arizona/roundtrip/blob/master/NOTICE) for details.
 
 SPDX-License-Identifier: MIT
+
+
+### Acknowledgements
+
+This work has been supported by the Department of Energy under DE-SC0022044, the United States Department of Defense through DTIC Contract FA8075-14-D-0002-0007, the National Science Foundation under NSF [III-1656958](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1656958).
