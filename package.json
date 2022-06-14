@@ -1,6 +1,6 @@
 {
   "name": "roundtrip",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "An interface for loading Javascript (notably D3 visualizations) into Jupyter Notebooks. Supports transferring data from Python Jupyter cells to Javascript—and back.",
   "private": true,
   "scripts": {
