@@ -62,6 +62,9 @@ let chartScale = {
     }
 };
 
+update_subselection([]);
+
+
 /**
  * Setup
  */
@@ -281,6 +284,8 @@ function render(svg){
                 let exjson = JSON.stringify(exclude);
                 RT.excluded_select = exjson;
                 
+                update_subselection(exclude);
+
                 render(svg);
             });
     
