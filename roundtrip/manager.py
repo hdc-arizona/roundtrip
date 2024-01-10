@@ -9,7 +9,6 @@ import inspect
 import os
 import sys
 
-
 def _default_converter(data):
     """
     The default converter from an active python datatype to
@@ -138,15 +137,17 @@ class RoundTrip:
             for tag in html.select("script"):
                 # TODO: Add option for server based loading with this
                 # So JS can be dynamically loaded
-                # tag['src'] = os.path.relpath(tag['src'], self.shell.user_ns['_dh'][0])
-                t = tag.extract()
-                with open(t["src"]) as f:
-                    src = f.read()
-                    scrpt = html.new_tag("script")
-                    scrpt.string = src
-                    html.select("head")[0].append(scrpt)
-
+                if tag.has_attr("src"):
+                    with open(tag["src"]) as f:
+                        src = f.read()
+                        # scrpt = html.new_tag("script")
+                        # scrpt.string = src
+                        # html.select("head")[0].append(scrpt)
+                        tag.string = src
+                        del tag["src"]
+                        
             output_html = str(html)
+
             self.relative_html_caches[file] = {"html": output_html}
         else:
             output_html = self.relative_html_caches[file]["html"]
@@ -185,22 +186,6 @@ class RoundTrip:
         # this initial string is where variable bindings go
         scripts = [""]
 
-        scope_tag = """
-                    <div id="locator-{id}">
-                    </div>
-            """.format(
-            id=self.scrid
-        )
-
-        locator_script = (
-            'var element = document.getElementById("locator-{id}").parentNode;'.format(
-                id=self.scrid
-            )
-        )
-
-        output_html += scope_tag
-        scripts.append(locator_script)
-
         # load files based on their individual properties
         for file in files:
             ft = self._get_file_type(file)
@@ -208,6 +193,7 @@ class RoundTrip:
                 scripts.append(open(file).read())
             else:
                 output_html += self._file_formatter(file)
+            
 
         bdg = Bridge(output_html, scripts, self.shell, self.istest)
         self.bridges[bdg.id] = bdg
@@ -430,6 +416,8 @@ class Bridge:
                 self.active_scripts.append(new_Javascript)
                 display(new_Javascript)
 
+
+
     def add_javascript(self, code):
         if not self.istest:
             display(Javascript(code))
@@ -538,7 +526,6 @@ class Bridge:
             new_Javascript = Javascript(hook)
             self.active_scripts.append(new_Javascript)
             display(new_Javascript)
-        # self.add_javascript(hook)
 
 
 # Singelton declaration of the roundtrip object.
