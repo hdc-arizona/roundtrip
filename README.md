@@ -88,6 +88,7 @@ Running the cells in this example will demonstrate:
 ```
 
 ####Cite the software
+
 C. Scully-Allison, J. Bartels, Katie Williams, Alex Bigelow, and Katherine E Isaacs “Roundtrip,” https://github.com/hdc-arizona/roundtrip, 2019.
 ```
 @misc{Roundtrip,
